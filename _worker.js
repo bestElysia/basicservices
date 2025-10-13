@@ -5,14 +5,15 @@ let mytoken = 'basic'; //可以随便取，或者uuid生成，https://1024tools.
 let BotToken ='7849119009:AAG-omiwDIT9-frohHZyV00_Vrv94t39GR4'; //可以为空，或者@BotFather中输入/start，/newbot，并关注机器人
 let ChatID ='7215463361'; //可以为空，或者@userinfobot中获取，/start
 let TG = 0; //小白勿动， 开发者专用，1 为推送所有的访问信息，0 为不推送订阅转换后端的访问信息与异常访问
-let FileName = 'bestdeying';
+let FileName = 'bestxuyi';
 let SUBUpdateTime = 24; //自定义订阅更新时间，单位小时
-let total = 100;//TB
+let total = 700;//TB
 let timestamp = 1924933812000;//2025-12-31
 
 //节点链接 + 订阅链接
 let MainData = `
 trojan://c3297885-573d-4149-8797-1992c0bc9a60@hwefpiwe.ulfmwcyp.lol:46547?security=tls&sni=douyin.com&allowInsecure=1&type=tcp&headerType=none#%E6%83%9F%E8%A7%A3%E6%BC%AB%E5%A4%A9%E4%BD%9C%E9%9B%AA%E9%A3%9E~%E2%9D%84%EF%B8%8F
+
 
 
 
@@ -75,34 +76,7 @@ export default {
 		MainData = 自建节点;
 		urls = await ADD(订阅链接);
 
-		if (
-  !(token == mytoken || token == fakeToken || url.pathname == ("/"+ mytoken) || url.pathname.includes("/"+ mytoken + "?"))
-) {
-  // 检查访客token
-  if (token === guestToken) {
-    let expire = Math.floor(timestamp / 1000);
-    let max = guestLimit * 1099511627776; // TB 转字节
-    let used = 0;
-    return new Response(btoa(MainData), {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Profile-Update-Interval": SUBUpdateTime,
-        "Subscription-Userinfo": `upload=${used}; download=${used}; total=${max}; expire=${expire}`,
-      },
-    });
-  }
-
-  // 如果不是访客也不是管理员
-  if ( TG == 1 && url.pathname !== "/" && url.pathname !== "/favicon.ico" ) 
-    await sendMessage(`#异常访问 ${FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${userAgent}\n域名: ${url.hostname}\n入口: ${url.pathname + url.search}`);
-
-  if (env.URL302) return Response.redirect(env.URL302, 302);
-  else if (env.URL) return await proxyURL(env.URL, url);
-  else return new Response(await nginx(), {
-    status: 200,
-    headers: { 'Content-Type': 'text/html; charset=UTF-8' },
-  });
-}
+		if ( !(token == mytoken || token == fakeToken || url.pathname == ("/"+ mytoken) || url.pathname.includes("/"+ mytoken + "?")) ) {
 			if ( TG == 1 && url.pathname !== "/" && url.pathname !== "/favicon.ico" ) await sendMessage(`#异常访问 ${FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${userAgent}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
 			if (env.URL302) return Response.redirect(env.URL302, 302);
 			else if (env.URL) return await proxyURL(env.URL, url);
