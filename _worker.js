@@ -1,8 +1,7 @@
-
 // 部署完成后在网址后面加上这个，获取自建节点和机场聚合节点，/?token=auto或/auto或
 
 let mytoken = 'basic'; //可以随便取，或者uuid生成，https://1024tools.com/uuid
-let BotToken ='7849119009:AAG-omiwDIT9-frohHZyV00_Vrv94t39GR4'; //可以为空，或者@BotFather中输入/start，/newbot，并关注机器人
+let BotToken ='7849119009:AAG-omiwD-frohHZyV00_Vrv94t39GR4'; //可以为空，或者@BotFather中输入/start，/newbot，并关注机器人
 let ChatID ='7215463361'; //可以为空，或者@userinfobot中获取，/start
 let TG = 0; //小白勿动， 开发者专用，1 为推送所有的访问信息，0 为不推送订阅转换后端的访问信息与异常访问
 let FileName = 'bestxuyi';
@@ -13,17 +12,7 @@ let timestamp = 1924933812000;//2025-12-31
 //节点链接 + 订阅链接
 let MainData = `
 trojan://c3297885-573d-4149-8797-1992c0bc9a60@hwefpiwe.ulfmwcyp.lol:46547?security=tls&sni=douyin.com&allowInsecure=1&type=tcp&headerType=none#%E6%83%9F%E8%A7%A3%E6%BC%AB%E5%A4%A9%E4%BD%9C%E9%9B%AA%E9%A3%9E~%E2%9D%84%EF%B8%8F
-
-
-
-
-
-
-
-
-
 `
-
 
 let urls = [];
 let subconverter = "SUBAPI.fxxk.dedyn.io"; //在线订阅转换后端，目前使用CM的订阅转换功能。支持自建psub 可自行搭建https://github.com/bulianglin/psub
@@ -32,8 +21,8 @@ let subProtocol = 'https';
 
 export default {
 	async fetch (request,env) {
-		const userAgentHeader = request.headers.get('User-Agent');
-		const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
+		const userAgentHeader = request.headers.get('User-Agent') || '';
+		const userAgent = userAgentHeader.toLowerCase();
 		const url = new URL(request.url);
 		const token = url.searchParams.get('token');
 		mytoken = env.TOKEN || mytoken;
@@ -56,7 +45,6 @@ export default {
 		currentDate.setHours(0, 0, 0, 0); 
 		const timeTemp = Math.ceil(currentDate.getTime() / 1000);
 		const fakeToken = await MD5MD5(`${mytoken}${timeTemp}`);
-		//console.log(`${fakeUserID}\n${fakeHostName}`); // 打印fakeID
 
 		let UD = Math.floor(((timestamp - Date.now())/timestamp * total * 1099511627776 )/2);
 		total = total * 1099511627776 ;
@@ -88,87 +76,74 @@ export default {
 			});
 		} else {
 			await sendMessage(`#获取订阅 ${FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${userAgentHeader}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
+
+			// === 智能判断客户端格式（支持 Surge 自动识别）===
 			let 订阅格式 = 'base64';
-			if (userAgent.includes('null') || userAgent.includes('subconverter') || userAgent.includes('nekobox') || userAgent.includes(('CF-Workers-SUB').toLowerCase())){
-				订阅格式 = 'base64';
-			} else if (userAgent.includes('clash') || ( url.searchParams.has('clash') && !userAgent.includes('subconverter'))){
+			if (userAgent.includes('clash') || userAgent.includes('flclash') || userAgent.includes('meta')) {
 				订阅格式 = 'clash';
-			} else if (userAgent.includes('sing-box') || userAgent.includes('singbox') || ( (url.searchParams.has('sb') || url.searchParams.has('singbox')) && !userAgent.includes('subconverter'))){
+			} else if (userAgent.includes('sing-box') || userAgent.includes('singbox')) {
 				订阅格式 = 'singbox';
-			} else if (userAgent.includes('surge') || ( url.searchParams.has('surge') && !userAgent.includes('subconverter'))){
+			} else if (userAgent.includes('surge')) {  // Surge 自动识别
 				订阅格式 = 'surge';
+			} else if (userAgent.includes('shadowrocket') || userAgent.includes('v2rayn') || userAgent.includes('nekobox')) {
+				订阅格式 = 'base64';
 			}
 
-			let subconverterUrl ;
+			let subconverterUrl = '';
 			let 订阅转换URL = `${url.origin}/${await MD5MD5(fakeToken)}?token=${fakeToken}`;
-			//console.log(订阅转换URL);
 			let req_data = MainData;
 
 			let 追加UA = 'v2rayn';
-			if (url.searchParams.has('clash')) 追加UA = 'clash';
-			else if(url.searchParams.has('singbox')) 追加UA = 'singbox';
-			else if(url.searchParams.has('surge')) 追加UA = 'surge';
-			
+			if (订阅格式 === 'clash') 追加UA = 'clash';
+			else if (订阅格式 === 'singbox') 追加UA = 'singbox';
+			else if (订阅格式 === 'surge') 追加UA = 'surge';
+
 			const 请求订阅响应内容 = await getSUB(urls, 追加UA, userAgentHeader);
-			console.log(请求订阅响应内容);
 			req_data += 请求订阅响应内容[0].join('\n');
 			订阅转换URL += "|" + 请求订阅响应内容[1];
 
 			if(env.WARP) 订阅转换URL += "|" + (await ADD(env.WARP)).join("|");
-			//修复中文错误
+
 			const utf8Encoder = new TextEncoder();
 			const encodedData = utf8Encoder.encode(req_data);
 			const text = String.fromCharCode.apply(null, encodedData);
-			
-			//去重
 			const uniqueLines = new Set(text.split('\n'));
 			const result = [...uniqueLines].join('\n');
-			//console.log(result);
-			
 			const base64Data = btoa(result);
 
-			if (订阅格式 == 'base64' || token == fakeToken){
-				return new Response(base64Data ,{
+			if (订阅格式 === 'base64') {
+				return new Response(base64Data, {
 					headers: { 
 						"content-type": "text/plain; charset=utf-8",
 						"Profile-Update-Interval": `${SUBUpdateTime}`,
 						"Subscription-Userinfo": `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
 					}
 				});
-			} else if (订阅格式 == 'clash'){
-				subconverterUrl = `${subProtocol}://${subconverter}/sub?target=clash&url=${encodeURIComponent(订阅转换URL)}&insert=false&config=${encodeURIComponent(subconfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
-			} else if (订阅格式 == 'singbox'){
-				subconverterUrl = `${subProtocol}://${subconverter}/sub?target=singbox&url=${encodeURIComponent(订阅转换URL)}&insert=false&config=${encodeURIComponent(subconfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
-			} else if (订阅格式 == 'surge'){
-				subconverterUrl = `${subProtocol}://${subconverter}/sub?target=surge&url=${encodeURIComponent(订阅转换URL)}&insert=false&config=${encodeURIComponent(subconfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
 			}
-			//console.log(订阅转换URL);
+
+			if (订阅格式 === 'surge') {
+				subconverterUrl = `${subProtocol}://${subconverter}/sub?target=surge&url=${encodeURIComponent(订阅转换URL)}&insert=false&config=${encodeURIComponent(subconfig)}&emoji=true&list=true&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
+			} else if (订阅格式 === 'clash') {
+				subconverterUrl = `${subProtocol}://${subconverter}/sub?target=clash&url=${encodeURIComponent(订阅转换URL)}&insert=false&config=${encodeURIComponent(subconfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
+			} else if (订阅格式 === 'singbox') {
+				subconverterUrl = `${subProtocol}://${subconverter}/sub?target=singbox&url=${encodeURIComponent(订阅转换URL)}&insert=false&config=${encodeURIComponent(subconfig)}&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`;
+			}
+
 			try {
 				const subconverterResponse = await fetch(subconverterUrl);
-				
-				if (!subconverterResponse.ok) {
-					return new Response(base64Data ,{
-						headers: { 
-							"content-type": "text/plain; charset=utf-8",
-							"Profile-Update-Interval": `${SUBUpdateTime}`,
-							"Subscription-Userinfo": `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
-						}
-					});
-					//throw new Error(`Error fetching subconverterUrl: ${subconverterResponse.status} ${subconverterResponse.statusText}`);
-				}
+				if (!subconverterResponse.ok) throw new Error('Subconverter failed');
 				let subconverterContent = await subconverterResponse.text();
-				if (订阅格式 == 'clash') subconverterContent =await clashFix(subconverterContent);
+				if (订阅格式 === 'clash') subconverterContent = await clashFix(subconverterContent);
 				return new Response(subconverterContent, {
 					headers: { 
 						"Content-Disposition": `attachment; filename*=utf-8''${encodeURIComponent(FileName)}; filename=${FileName}`,
 						"content-type": "text/plain; charset=utf-8",
 						"Profile-Update-Interval": `${SUBUpdateTime}`,
 						"Subscription-Userinfo": `upload=${UD}; download=${UD}; total=${total}; expire=${expire}`,
-
 					},
 				});
 			} catch (error) {
-				return new Response(base64Data ,{
+				return new Response(base64Data, {
 					headers: { 
 						"content-type": "text/plain; charset=utf-8",
 						"Profile-Update-Interval": `${SUBUpdateTime}`,
@@ -180,49 +155,22 @@ export default {
 	}
 };
 
+// === 所有原函数全部保留 ===
 async function ADD(envadd) {
-	var addtext = envadd.replace(/[	"'|\r\n]+/g, ',').replace(/,+/g, ',');  // 将空格、双引号、单引号和换行符替换为逗号
-	//console.log(addtext);
+	var addtext = envadd.replace(/[	"'|\r\n]+/g, ',').replace(/,+/g, ',');
 	if (addtext.charAt(0) == ',') addtext = addtext.slice(1);
 	if (addtext.charAt(addtext.length -1) == ',') addtext = addtext.slice(0, addtext.length - 1);
 	const add = addtext.split(',');
-	//console.log(add);
-	return add ;
+	return add;
 }
 
 async function nginx() {
-	const text = `
-	<!DOCTYPE html>
-	<html>
-	<head>
-	<title>Welcome to nginx!</title>
-	<style>
-		body {
-			width: 35em;
-			margin: 0 auto;
-			font-family: Tahoma, Verdana, Arial, sans-serif;
-		}
-	</style>
-	</head>
-	<body>
-	<h1>Welcome to nginx!</h1>
-	<p>If you see this page, the nginx web server is successfully installed and
-	working. Further configuration is required.</p>
-	
-	<p>For online documentation and support please refer to
-	<a href="http://nginx.org/">nginx.org</a>.<br/>
-	Commercial support is available at
-	<a href="http://nginx.com/">nginx.com</a>.</p>
-	
-	<p><em>Thank you for using nginx.</em></p>
-	</body>
-	</html>
-	`
-	return text ;
+	const text = `<!DOCTYPE html><html><head><title>Welcome to nginx!</title><style>body {width: 35em;margin: 0 auto;font-family: Tahoma, Verdana, Arial, sans-serif;}</style></head><body><h1>Welcome to nginx!</h1><p>If you see this page, the nginx web server is successfully installed and working. Further configuration is required.</p><p>For online documentation and support please refer to <a href="http://nginx.org/">nginx.org</a>.<br/>Commercial support is available at <a href="http://nginx.com/">nginx.com</a>.</p><p><em>Thank you for using nginx.</em></p></body></html>`;
+	return text;
 }
 
 async function sendMessage(type, ip, add_data = "") {
-	if ( BotToken !== '' && ChatID !== ''){
+	if (BotToken !== '' && ChatID !== '') {
 		let msg = "";
 		const response = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN`);
 		if (response.status == 200) {
@@ -231,8 +179,7 @@ async function sendMessage(type, ip, add_data = "") {
 		} else {
 			msg = `${type}\nIP: ${ip}\n<tg-spoiler>${add_data}`;
 		}
-	
-		let url = "https://api.telegram.org/bot"+ BotToken +"/sendMessage?chat_id=" + ChatID + "&parse_mode=HTML&text=" + encodeURIComponent(msg);
+		let url = "https://api.telegram.org/bot" + BotToken + "/sendMessage?chat_id=" + ChatID + "&parse_mode=HTML&text=" + encodeURIComponent(msg);
 		return fetch(url, {
 			method: 'get',
 			headers: {
@@ -252,15 +199,12 @@ function base64Decode(str) {
 
 async function MD5MD5(text) {
 	const encoder = new TextEncoder();
-  
 	const firstPass = await crypto.subtle.digest('MD5', encoder.encode(text));
 	const firstPassArray = Array.from(new Uint8Array(firstPass));
 	const firstHex = firstPassArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
 	const secondPass = await crypto.subtle.digest('MD5', encoder.encode(firstHex.slice(7, 27)));
 	const secondPassArray = Array.from(new Uint8Array(secondPass));
 	const secondHex = secondPassArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
 	return secondHex.toLowerCase();
 }
 
@@ -272,7 +216,6 @@ function clashFix(content) {
 		} else {
 			lines = content.split('\n');
 		}
-	
 		let result = "";
 		for (let line of lines) {
 			if (line.includes('type: wireguard')) {
@@ -283,7 +226,6 @@ function clashFix(content) {
 				result += line + '\n';
 			}
 		}
-
 		content = result;
 	}
 	return content;
@@ -292,102 +234,63 @@ function clashFix(content) {
 async function proxyURL(proxyURL, url) {
 	const URLs = await ADD(proxyURL);
 	const fullURL = URLs[Math.floor(Math.random() * URLs.length)];
-
-	// 解析目标 URL
 	let parsedURL = new URL(fullURL);
-	console.log(parsedURL);
-	// 提取并可能修改 URL 组件
 	let URLProtocol = parsedURL.protocol.slice(0, -1) || 'https';
 	let URLHostname = parsedURL.hostname;
 	let URLPathname = parsedURL.pathname;
 	let URLSearch = parsedURL.search;
-
-	// 处理 pathname
 	if (URLPathname.charAt(URLPathname.length - 1) == '/') {
 		URLPathname = URLPathname.slice(0, -1);
 	}
 	URLPathname += url.pathname;
-
-	// 构建新的 URL
 	let newURL = `${URLProtocol}://${URLHostname}${URLPathname}${URLSearch}`;
-
-	// 反向代理请求
 	let response = await fetch(newURL);
-
-	// 创建新的响应
 	let newResponse = new Response(response.body, {
 		status: response.status,
 		statusText: response.statusText,
 		headers: response.headers
 	});
-
-	// 添加自定义头部，包含 URL 信息
-	//newResponse.headers.set('X-Proxied-By', 'Cloudflare Worker');
-	//newResponse.headers.set('X-Original-URL', fullURL);
 	newResponse.headers.set('X-New-URL', newURL);
-
 	return newResponse;
 }
 
 async function getSUB(api, 追加UA, userAgentHeader) {
-	if (!api || api.length === 0) {
-		return [];
-	}
-
+	if (!api || api.length === 0) return [];
 	let newapi = "";
 	let 订阅转换URLs = "";
-	const controller = new AbortController(); // 创建一个AbortController实例，用于取消请求
-
-	const timeout = setTimeout(() => {
-		controller.abort(); // 2秒后取消所有请求
-	}, 2000);
-	
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), 2000);
 	try {
-		// 使用Promise.allSettled等待所有API请求完成，无论成功或失败
 		const responses = await Promise.allSettled(api.map(apiUrl => fetch(apiUrl, {
 			method: 'get', 
 			headers: {
 				'Accept': 'text/html,application/xhtml+xml,application/xml;',
 				'User-Agent': `${追加UA} cmliu/CF-Workers-SUB ${userAgentHeader}`
 			},
-			signal: controller.signal // 将AbortController的信号量添加到fetch请求中
+			signal: controller.signal
 		}).then(response => response.ok ? response.text() : Promise.reject())));
-	
-		// 遍历所有响应
-		const modifiedResponses = responses.map((response, index) => {
-			// 检查是否请求成功
-			return {
-				status: response.status,
-				value: response.value,
-				apiUrl: api[index] // 将原始的apiUrl添加到返回对象中
-			};
-		});
-	
-		console.log(modifiedResponses); // 输出修改后的响应数组
-	
+		const modifiedResponses = responses.map((response, index) => ({
+			status: response.status,
+			value: response.value,
+			apiUrl: api[index]
+		}));
 		for (const response of modifiedResponses) {
-			// 检查响应状态是否为'fulfilled'
 			if (response.status === 'fulfilled') {
-				const content = await response.value || 'null'; // 获取响应的内容
+				const content = await response.value || 'null';
 				if (content.includes('proxies') && content.includes('proxy-groups')) {
-					// Clash 配置
 					订阅转换URLs += "|" + response.apiUrl;
 				} else if (content.includes('outbounds') && content.includes('inbounds')){
-					// Singbox 配置
 					订阅转换URLs += "|" + response.apiUrl;
 				} else {
-					newapi += base64Decode(content) + '\n'; // 解码并追加内容
+					newapi += base64Decode(content) + '\n';
 				}
 			}
 		}
 	} catch (error) {
-		console.error(error); // 捕获并输出错误信息
+		console.error(error);
 	} finally {
-		clearTimeout(timeout); // 清除定时器
+		clearTimeout(timeout);
 	}
-	
 	const 订阅内容 = await ADD(newapi);
-
-	// 返回处理后的结果
 	return [订阅内容,订阅转换URLs];
 }
