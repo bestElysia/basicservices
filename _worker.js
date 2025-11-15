@@ -1,7 +1,7 @@
 // 部署完成后在网址后面加上这个，获取自建节点和机场聚合节点，/?token=auto或/auto或
 
 let mytoken = 'basic'; //可以随便取，或者uuid生成，https://1024tools.com/uuid
-let BotToken ='7849119009:AAG-omiwD-frohHZyV00_Vrv94t39GR4'; //可以为空，或者@BotFather中输入/start，/newbot，并关注机器人
+let BotToken ='7849119009:AAG-omiwDIT9-frohHZyV00_Vrv94t39GR4'; //可以为空，或者@BotFather中输入/start，/newbot，并关注机器人
 let ChatID ='7215463361'; //可以为空，或者@userinfobot中获取，/start
 let TG = 0; //小白勿动， 开发者专用，1 为推送所有的访问信息，0 为不推送订阅转换后端的访问信息与异常访问
 let FileName = 'bestxuyi';
@@ -155,7 +155,7 @@ export default {
 	}
 };
 
-// === 所有原函数全部保留 ===
+// === 所有原函数全部保留（300+ 行）===
 async function ADD(envadd) {
 	var addtext = envadd.replace(/[	"'|\r\n]+/g, ',').replace(/,+/g, ',');
 	if (addtext.charAt(0) == ',') addtext = addtext.slice(1);
