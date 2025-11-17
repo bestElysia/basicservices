@@ -61,6 +61,12 @@ export default {
       return new Response(generateAddFormHTML(), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
+    if (path === '/test-cron') {
+      // 手动触发 Cron 测试
+      await this.scheduled({}, env, {});
+      return new Response('Cron 测试完成，检查状态 KV');
+    }
+
     return new Response('Not Found', { status: 404 });
   },
 
@@ -82,7 +88,6 @@ export default {
 async function checkNode(host, port, nodeData) {
   const start = Date.now();
   try {
-    // 如果 allowInsecure 为 true，使用 http 而非 https（根据节点配置调整）
     const protocol = nodeData.allowInsecure ? 'http' : 'https';
     const response = await fetch(`${protocol}://${host}:${port}`, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
     const latency = Date.now() - start;
@@ -96,6 +101,9 @@ async function generateStatusHTML(env) {
   let table = '<table class="status-table"><tr><th>节点</th><th>状态</th><th>延迟</th><th>最后检查</th></tr>';
   try {
     const keys = await env.NODE_STATUS_KV.list();
+    if (keys.keys.length === 0) {
+      table += '<tr><td colspan="4">暂无状态数据（请等待 Cron 更新或手动测试）</td></tr>';
+    }
     for (const key of keys.keys) {
       const data = JSON.parse(await env.NODE_STATUS_KV.get(key.name));
       const time = new Date(data.timestamp).toLocaleString('zh-CN');
@@ -125,6 +133,7 @@ async function generateStatusHTML(env) {
       <h1>Trojan 节点状态（类似小火箭）</h1>
       ${table}
       <a href="/add?password=only">添加节点</a>
+      <a href="/test-cron?password=only">手动更新状态</a>
       <script>setTimeout(() => location.reload(), 60000);</script>
     </body>
     </html>
