@@ -11,7 +11,7 @@ export default {
     if (path === '/') {
       // 主页：节点状态列表
       const html = await generateStatusHTML(env);
-      return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
     if (path === '/add') {
@@ -58,7 +58,7 @@ export default {
       }
 
       // GET: 渲染添加表单
-      return new Response(generateAddFormHTML(), { headers: { 'Content-Type': 'text/html' } });
+      return new Response(generateAddFormHTML(), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
 
     return new Response('Not Found', { status: 404 });
@@ -110,6 +110,7 @@ async function generateStatusHTML(env) {
     <!DOCTYPE html>
     <html lang="zh">
     <head>
+      <meta charset="UTF-8">
       <title>节点监控</title>
       <style>
         body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
@@ -135,6 +136,7 @@ function generateAddFormHTML() {
     <!DOCTYPE html>
     <html lang="zh">
     <head>
+      <meta charset="UTF-8">
       <title>添加节点</title>
       <style>
         body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; max-width: 600px; margin: auto; }
