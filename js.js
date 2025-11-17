@@ -2,227 +2,124 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
-    const ip = request.headers.get('cf-connecting-ip') || '未知';
 
-    // 检查封禁 IP（排除 /admin 和 /api 路径）
-    if (!path.startsWith('/admin') && !path.startsWith('/api')) {
-      const isBanned = await env.BANNED_IPS.get(ip);
-      if (isBanned) {
-        return new Response('Access Denied', { status: 403 });
+    // 认证：?password=yourpass（替换 'yourpass'）
+    if (url.searchParams.get('password') !== 'yourpass') {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    if (path === '/') {
+      // 主页：节点状态列表
+      const html = await generateStatusHTML(env);
+      return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+    }
+
+    if (path === '/add') {
+      if (request.method === 'POST') {
+        // 处理表单提交
+        const formData = await request.formData();
+        const name = formData.get('name');
+        const host = formData.get('host');
+        const port = formData.get('port');
+        const subscription = formData.get('subscription');
+
+        if (subscription) {
+          // 批量导入订阅链接（base64 格式，如 Shadowrocket 导出）
+          const decoded = atob(subscription); // 解码 base64
+          const lines = decoded.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('trojan://')) {
+              // 解析 Trojan URI: trojan://password@host:port?params
+              const parts = line.replace('trojan://', '').split('@');
+              const auth = parts[0];
+              const addr = parts[1].split(':');
+              const nodeHost = addr[0];
+              const nodePort = parseInt(addr[1].split('?')[0]);
+              const nodeName = `Trojan-${nodeHost}`; // 自动命名
+              await env.NODE_LIST_KV.put(nodeName, JSON.stringify({ host: nodeHost, port: nodePort, auth }));
+            }
+          }
+          return new Response('订阅节点已导入', { status: 200 });
+        } else if (name && host && port) {
+          // 单个添加
+          await env.NODE_LIST_KV.put(name, JSON.stringify({ host, port }));
+          return new Response('节点已添加', { status: 200 });
+        }
+        return new Response('无效数据', { status: 400 });
       }
+
+      // GET: 渲染添加表单
+      return new Response(generateAddFormHTML(), { headers: { 'Content-Type': 'text/html' } });
     }
 
-    if (path === '/' || path === '/admin') {
-      return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    return new Response('Not Found', { status: 404 });
+  },
+
+  async scheduled(event, env, ctx) {
+    // Cron: 检查节点
+    const keys = await env.NODE_LIST_KV.list();
+    for (const key of keys.keys) {
+      const nodeData = JSON.parse(await env.NODE_LIST_KV.get(key.name));
+      const { status, latency } = await checkNode(nodeData.host, nodeData.port);
+      await env.NODE_STATUS_KV.put(key.name, JSON.stringify({ status, latency, timestamp: Date.now() }));
     }
+  }
+};
 
-    if (path === '/api/all') {
-      const { keys } = await env.ACCESS_LOGS.list({ limit: 1000 });
-      const logs = [], countryMap = {}, hourMap = Array(24).fill(0);
-      const today = new Date().toISOString().slice(0,10);
-      const seenIPs = new Set(), todayIPs = new Set();
-
-      for (const k of keys) {
-        const data = await env.ACCESS_LOGS.get(k.name);
-        if (!data) continue;
-        const l = JSON.parse(data);
-        logs.push(l);
-        countryMap[l.country] = (countryMap[l.country] || 0) + 1;
-        hourMap[new Date(l.timestamp).getHours()]++;
-        if (Date.now() - l.timestamp < 5*60*1000) seenIPs.add(l.ip);
-        if (l.time.startsWith(today)) todayIPs.add(l.ip);
-      }
-
-      logs.sort((a,b) => b.timestamp - a.timestamp);
-
-      return new Response(JSON.stringify({
-        stats: { today: logs.filter(l=>l.time.startsWith(today)).length, newUsers: todayIPs.size, total: logs.length, online: seenIPs.size },
-        country: countryMap,
-        trend: { hours: Array.from({length:24},(_,i)=>i+'时'), visits: hourMap },
-        logs: logs.slice(0,200)
-      }), { headers: { 'Content-Type': 'application/json' } });
-    }
-
-    if (path === '/api/ban') {
-      const banIP = url.searchParams.get('ip');
-      if (banIP) {
-        await env.BANNED_IPS.put(banIP, 'banned', { expirationTtl: 60*60*24*365 }); // 默认封禁 1 年，可调整
-        return new Response('OK', { status: 200 });
-      }
-      return new Response('Invalid IP', { status: 400 });
-    }
-
-    // 记录日志
-    const hostname = request.headers.get('host') || '';
-    const isTarget = ['bestxuyi.us','deyingluxury.com','chinafamoustea.com','elysia.bestxuyi.us'].some(d => hostname===d || hostname.endsWith('.'+d));
-    if (isTarget) {
-      const logKey = `log:${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const logData = {
-        ip: ip,
-        country: request.headers.get('cf-ipcountry') || 'XX',
-        domain: hostname,
-        path: url.pathname + url.search,
-        ua: request.headers.get('user-agent') || '',
-        time: new Date().toLocaleString('zh-CN'),
-        timestamp: Date.now()
-      };
-      await env.ACCESS_LOGS.put(logKey, JSON.stringify(logData), { expirationTtl: 60*60*24*30 });
-    }
-
-    return fetch(request);
+async function checkNode(host, port) {
+  const start = Date.now();
+  try {
+    const response = await fetch(`https://${host}:${port}`, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
+    const latency = Date.now() - start;
+    return { status: response.ok ? '在线' : '离线', latency };
+  } catch {
+    return { status: '离线', latency: 'N/A' };
   }
 }
 
-const HTML = `<!DOCTYPE html>
-<html lang="zh" class="scroll-smooth">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>全站监控中心 · Elysia</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
-  <style>
-    :root { --primary: #6366f1; --primary-dark: #4f46e5; }
-    .glass { background: rgba(255,255,255,0.25); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.18); }
-    .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
-    .gradient-text { background: linear-gradient(to right, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  </style>
-</head>
-<body class="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-100 min-h-screen">
-  <div class="container mx-auto px-4 py-8 max-w-7xl">
+async function generateStatusHTML(env) {
+  const keys = await env.NODE_STATUS_KV.list();
+  let table = '<table border="1"><tr><th>节点</th><th>状态</th><th>延迟</th><th>最后检查</th></tr>';
+  for (const key of keys.keys) {
+    const data = JSON.parse(await env.NODE_STATUS_KV.get(key.name));
+    const time = new Date(data.timestamp).toLocaleString('zh-CN');
+    table += `<tr><td>${key.name}</td><td>${data.status}</td><td>${data.latency}</td><td>${time}</td></tr>`;
+  }
+  table += '</table>';
 
-    <!-- 标题 -->
-    <div class="text-center mb-12">
-      <h1 class="text-5xl md:text-6xl font-bold gradient-text mb-4">全站监控中心</h1>
-      <p class="text-xl text-gray-600">elysia.bestxuyi.us 及所有子域</p>
-    </div>
+  return `
+    <!DOCTYPE html>
+    <html lang="zh">
+    <head><title>节点监控</title></head>
+    <body>
+      <h1>Trojan 节点状态（类似小火箭）</h1>
+      ${table}
+      <a href="/add?password=yourpass">添加节点</a>
+      <script>setTimeout(() => location.reload(), 60000);</script>
+    </body>
+    </html>
+  `;
+}
 
-    <!-- 统计卡片（玻璃拟态） -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-      <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
-        <i class="ri-eye-line text-4xl text-indigo-600 mb-3"></i>
-        <div class="text-4xl font-bold text-gray-800" id="today">0</div>
-        <div class="text-gray-600">今日访问</div>
-      </div>
-      <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
-        <i class="ri-user-add-line text-4xl text-green-600 mb-3"></i>
-        <div class="text-4xl font-bold text-gray-800" id="newUsers">0</div>
-        <div class="text-gray-600">今日新用户</div>
-      </div>
-      <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
-        <i class="ri-global-line text-4xl text-purple-600 mb-3"></i>
-        <div class="text-4xl font-bold text-gray-800" id="total">0</div>
-        <div class="text-gray-600">历史总访问</div>
-      </div>
-      <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
-        <i class="ri-user-voice-line text-4xl text-orange-600 mb-3"></i>
-        <div class="text-4xl font-bold text-gray-800" id="online">0</div>
-        <div class="text-gray-600">当前在线</div>
-      </div>
-    </div>
-
-    <div class="grid lg:grid-cols-2 gap-8 mb-12">
-      <!-- 国家分布 -->
-      <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl p-8 card-hover transition-all">
-        <h2 class="text-2xl font-bold mb-6 flex items-center"><i class="ri-earth-line mr-3 text-indigo-600"></i> 全球访客分布</h2>
-        <canvas id="countryChart"></canvas>
-      </div>
-      <!-- 24小时趋势 -->
-      <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl p-8 card-hover transition-all">
-        <h2 class="text-2xl font-bold mb-6 flex items-center"><i class="ri-line-chart-line mr-3 text-purple-600"></i> 24小时访问趋势</h2>
-        <canvas id="trendChart"></canvas>
-      </div>
-    </div>
-
-    <!-- 实时日志 -->
-    <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl p-8">
-      <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h2 class="text-2xl font-bold flex items-center"><i class="ri-history-line mr-3 text-green-600"></i> 实时访问记录</h2>
-        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <input type="text" id="search" placeholder="搜索任意内容..." class="px-4 py-3 border rounded-xl flex-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <button onclick="load()" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition"><i class="ri-refresh-line mr-2"></i>刷新</button>
-        </div>
-      </div>
-      <div id="list" class="space-y-4"></div>
-    </div>
-  </div>
-
-  <script>
-    let chartCountry, chartTrend;
-
-    async function load() {
-      const res = await fetch('/api/all');
-      const data = await res.json();
-
-      // 统计
-      document.getElementById('today').textContent = data.stats.today.toLocaleString();
-      document.getElementById('newUsers').textContent = data.stats.newUsers.toLocaleString();
-      document.getElementById('total').textContent = data.stats.total.toLocaleString();
-      document.getElementById('online').textContent = data.stats.online;
-
-      // 国家分布
-      if (chartCountry) chartCountry.destroy();
-      chartCountry = new Chart(document.getElementById('countryChart'), {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(data.country),
-          datasets: [{ data: Object.values(data.country), backgroundColor: ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899'] }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-      });
-
-      // 趋势图
-      if (chartTrend) chartTrend.destroy();
-      chartTrend = new Chart(document.getElementById('trendChart'), {
-        type: 'line',
-        data: {
-          labels: data.trend.hours,
-          datasets: [{ label: '访问量', data: data.trend.visits, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.4, fill: true }]
-        },
-        options: { responsive: true }
-      });
-
-      // 日志
-      document.getElementById('list').innerHTML = data.logs.map(l => \`
-        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-2xl border border-indigo-100 hover:shadow-md transition">
-          <div class="flex justify-between items-start flex-wrap gap-3">
-            <div>
-              <strong class="text-indigo-700 text-lg">\${l.ip}</strong>
-              <span class="ml-3 bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">\${l.country}</span>
-              <span class="ml-2 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">\${l.domain}</span>
-            </div>
-            <div class="text-sm text-gray-500">\${l.time}</div>
-          </div>
-          <div class="mt-2 text-gray-700 font-medium">\${l.path}</div>
-          <div class="text-xs text-gray-500 mt-1 truncate max-w-4xl">\${l.ua}</div>
-          <button onclick="banIP('\${l.ip}')" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">封禁 IP</button>
-        </div>
-      \`).join('') || '<p class="text-center py-12 text-gray-400">暂无访问记录 ~</p>';
-    }
-
-    async function banIP(ip) {
-      if (confirm(\`确认封禁 IP: \${ip} ?\`)) {
-        const res = await fetch(\`/api/ban?ip=\${encodeURIComponent(ip)}\`);
-        if (res.ok) {
-          alert('IP 已封禁');
-          load();
-        } else {
-          alert('封禁失败');
-        }
-      }
-    }
-
-    function filter() {
-      const q = document.getElementById('search').value.toLowerCase();
-      document.querySelectorAll('#list > div').forEach(d => {
-        d.style.display = d.textContent.toLowerCase().includes(q) ? '' : 'none';
-      });
-    }
-
-    load();
-    setInterval(load, 8000);
-    document.getElementById('search').addEventListener('input', filter);
-  </script>
-</body>
-</html>`;
+function generateAddFormHTML() {
+  return `
+    <!DOCTYPE html>
+    <html lang="zh">
+    <head><title>添加节点</title></head>
+    <body>
+      <h1>添加 Trojan 节点</h1>
+      <form method="POST">
+        <label>节点名: <input name="name"></label><br>
+        <label>Host: <input name="host"></label><br>
+        <label>Port: <input name="port" type="number"></label><br>
+        <button type="submit">添加单个</button>
+      </form>
+      <h2>或导入订阅链接 (base64)</h2>
+      <form method="POST">
+        <label>订阅 base64: <textarea name="subscription"></textarea></label><br>
+        <button type="submit">批量导入</button>
+      </form>
+    </body>
+    </html>
+  `;
+}
