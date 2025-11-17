@@ -102,22 +102,22 @@ const HTML = `<!DOCTYPE html>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
       <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
         <i class="ri-eye-line text-4xl text-indigo-600 mb-3"></i>
-        <div class="text-4xl font-bold text-gray-800" id="today">0</div>
+        <div class="text-4xl font-bold text-gray-800" id="today">454</div>
         <div class="text-gray-600">今日访问</div>
       </div>
       <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
         <i class="ri-user-add-line text-4xl text-green-600 mb-3"></i>
-        <div class="text-4xl font-bold text-gray-800" id="newUsers">0</div>
+        <div class="text-4xl font-bold text-gray-800" id="newUsers">300</div>
         <div class="text-gray-600">今日新用户</div>
       </div>
       <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
         <i class="ri-global-line text-4xl text-purple-600 mb-3"></i>
-        <div class="text-4xl font-bold text-gray-800" id="total">0</div>
+        <div class="text-4xl font-bold text-gray-800" id="total">16554</div>
         <div class="text-gray-600">历史总访问</div>
       </div>
       <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
         <i class="ri-user-voice-line text-4xl text-orange-600 mb-3"></i>
-        <div class="text-4xl font-bold text-gray-800" id="online">0</div>
+        <div class="text-4xl font-bold text-gray-800" id="online">142</div>
         <div class="text-gray-600">当前在线</div>
       </div>
     </div>
