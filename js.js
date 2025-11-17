@@ -3,7 +3,7 @@ addEventListener('fetch', event => {
 })
 
 const LOG_KV = ACCESS_LOGS
-const BANNED_IPS = BANNED_IPS // 假设您已配置一个名为 BANNED_IPS 的 KV 命名空间
+const banned = BANNED_IPS
 
 const HTML = `<!DOCTYPE html>
 <html lang="zh" class="scroll-smooth">
