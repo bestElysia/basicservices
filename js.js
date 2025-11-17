@@ -3,7 +3,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // 认证：?password=only（已设置 'only'）
+    // 认证：?password=only
     if (url.searchParams.get('password') !== 'only') {
       return new Response('Unauthorized', { status: 401 });
     }
@@ -93,12 +93,16 @@ async function checkNode(host, port, nodeData) {
 }
 
 async function generateStatusHTML(env) {
-  const keys = await env.NODE_STATUS_KV.list();
   let table = '<table class="status-table"><tr><th>节点</th><th>状态</th><th>延迟</th><th>最后检查</th></tr>';
-  for (const key of keys.keys) {
-    const data = JSON.parse(await env.NODE_STATUS_KV.get(key.name));
-    const time = new Date(data.timestamp).toLocaleString('zh-CN');
-    table += `<tr><td>${key.name}</td><td>${data.status}</td><td>${data.latency}</td><td>${time}</td></tr>`;
+  try {
+    const keys = await env.NODE_STATUS_KV.list();
+    for (const key of keys.keys) {
+      const data = JSON.parse(await env.NODE_STATUS_KV.get(key.name));
+      const time = new Date(data.timestamp).toLocaleString('zh-CN');
+      table += `<tr><td>${key.name}</td><td>${data.status}</td><td>${data.latency}</td><td>${time}</td></tr>`;
+    }
+  } catch (e) {
+    table += `<tr><td colspan="4">错误: KV 加载失败 (${e.message})。请检查绑定。</td></tr>`;
   }
   table += '</table>';
 
@@ -147,14 +151,14 @@ function generateAddFormHTML() {
     <body>
       <h1>添加 Trojan 节点</h1>
       <form method="POST">
-        <label>节点名: <input name="name" placeholder="e.g., 节点1"></label>
-        <label>Host: <input name="host" placeholder="e.g., example.com"></label>
-        <label>Port: <input name="port" type="number" placeholder="e.g., 443"></label>
+        <label>节点名: <input name="name" placeholder="e.g., 节点1" required></label>
+        <label>Host: <input name="host" placeholder="e.g., example.com" required></label>
+        <label>Port: <input name="port" type="number" placeholder="e.g., 443" required></label>
         <button type="submit">添加单个节点</button>
       </form>
       <h2>或导入订阅链接 (base64)</h2>
       <form method="POST">
-        <label>订阅 base64: <textarea name="subscription" placeholder="粘贴 base64 编码的订阅内容"></textarea></label>
+        <label>订阅 base64: <textarea name="subscription" placeholder="粘贴 base64 编码的订阅内容" required></textarea></label>
         <button type="submit">批量导入</button>
       </form>
       <a href="/?password=only">返回主页</a>
