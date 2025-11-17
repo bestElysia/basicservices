@@ -35,8 +35,25 @@ export default {
 
       logs.sort((a,b) => b.timestamp - a.timestamp);
 
+      // 定义基础数据
+      const baseToday = 454;
+      const baseNewUsers = 300;
+      const baseTotal = 16554;
+      const baseOnline = 142;
+
+      // 计算实时数据并加上基础数据
+      const realtimeToday = logs.filter(l=>l.time.startsWith(today)).length;
+      const realtimeNewUsers = todayIPs.size;
+      const realtimeTotal = logs.length;
+      const realtimeOnline = seenIPs.size;
+
       return new Response(JSON.stringify({
-        stats: { today: logs.filter(l=>l.time.startsWith(today)).length, newUsers: todayIPs.size, total: logs.length, online: seenIPs.size },
+        stats: { 
+          today: baseToday + realtimeToday, 
+          newUsers: baseNewUsers + realtimeNewUsers, 
+          total: baseTotal + realtimeTotal, 
+          online: baseOnline + realtimeOnline 
+        },
         country: countryMap,
         trend: { hours: Array.from({length:24},(_,i)=>i+'时'), visits: hourMap },
         logs: logs.slice(0,200)
