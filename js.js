@@ -3,7 +3,8 @@ addEventListener('fetch', event => {
 })
 
 const LOG_KV = ACCESS_LOGS
-const banned = BANNED_IPS
+const BANNEdDKV = BANNED_IPS
+const TRAFFIC_KV = TRAFFIC  // 假设您已配置一个名为 TRAFFIC 的 KV 命名空间绑定
 
 const HTML = `<!DOCTYPE html>
 <html lang="zh" class="scroll-smooth">
@@ -67,6 +68,12 @@ const HTML = `<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- IP 流量记录 -->
+    <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl p-8 mb-12">
+      <h2 class="text-2xl font-bold mb-6 flex items-center"><i class="ri-cloud-line mr-3 text-blue-600"></i> IP 流量使用记录（Top 50）</h2>
+      <div id="trafficList" class="space-y-4"></div>
+    </div>
+
     <!-- 实时日志 -->
     <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl p-8">
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -128,9 +135,26 @@ const HTML = `<!DOCTYPE html>
           </div>
           <div class="mt-2 text-gray-700 font-medium">\${l.path}</div>
           <div class="text-xs text-gray-500 mt-1 truncate max-w-4xl">\${l.ua}</div>
+          <div class="text-xs text-gray-500 mt-1">流量: \${(l.traffic / 1024).toFixed(2)} KB</div>
           <button onclick="banIP('\${l.ip}')" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">封禁 IP</button>
         </div>
       \`).join('') || '<p class="text-center py-12 text-gray-400">暂无访问记录 ~</p>';
+
+      // 加载流量记录
+      loadTraffic();
+    }
+
+    async function loadTraffic() {
+      const res = await fetch('/api/traffic');
+      const data = await res.json();
+      document.getElementById('trafficList').innerHTML = data.traffic.map(t => \`
+        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-5 rounded-2xl border border-blue-100 hover:shadow-md transition">
+          <div class="flex justify-between items-center">
+            <strong class="text-blue-700 text-lg">\${t.ip}</strong>
+            <div class="text-gray-700 font-medium">\${(t.total / 1024 / 1024).toFixed(2)} MB</div>
+          </div>
+        </div>
+      \`).join('') || '<p class="text-center py-12 text-gray-400">暂无流量记录 ~</p>';
     }
 
     async function banIP(ip) {
@@ -203,6 +227,21 @@ async function handleRequest(request) {
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
+  if (path === '/api/traffic') {
+    const { keys } = await TRAFFIC_KV.list({ prefix: 'traffic:', limit: 1000 });
+    const trafficData = [];
+
+    for (const k of keys) {
+      const data = await TRAFFIC_KV.get(k.name);
+      if (!data) continue;
+      const t = JSON.parse(data);
+      trafficData.push({ ip: k.name.replace('traffic:', ''), total: t.total });
+    }
+
+    trafficData.sort((a, b) => b.total - a.total);
+    return new Response(JSON.stringify({ traffic: trafficData.slice(0, 50) }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
   if (path === '/api/ban') {
     const banIP = url.searchParams.get('ip');
     if (banIP) {
@@ -212,10 +251,39 @@ async function handleRequest(request) {
     return new Response('Invalid IP', { status: 400 });
   }
 
-  // 记录日志
+  // 记录日志和流量
   const hostname = request.headers.get('host') || '';
   const isTarget = ['bestxuyi.us','deyingluxury.com','chinafamoustea.com','elysia.bestxuyi.us'].some(d => hostname===d || hostname.endsWith('.'+d));
+  let traffic = 0;
+
   if (isTarget) {
+    // 计算上传流量（request body 大小）
+    let uploadSize = 0;
+    if (request.body) {
+      const clone = request.clone();
+      const body = await clone.arrayBuffer();
+      uploadSize = body.byteLength;
+    }
+
+    // 代理请求并计算下载流量（response body 大小）
+    const response = await fetch(request);
+    let downloadSize = 0;
+    if (response.body) {
+      const responseClone = response.clone();
+      const respBody = await responseClone.arrayBuffer();
+      downloadSize = respBody.byteLength;
+    }
+
+    traffic = uploadSize + downloadSize;
+
+    // 更新 IP 流量记录
+    const trafficKey = `traffic:${ip}`;
+    let currentTraffic = await TRAFFIC_KV.get(trafficKey);
+    currentTraffic = currentTraffic ? JSON.parse(currentTraffic) : { total: 0 };
+    currentTraffic.total += traffic;
+    await TRAFFIC_KV.put(trafficKey, JSON.stringify(currentTraffic), { expirationTtl: 60*60*24*365 }); // 保留 1 年，可调整
+
+    // 记录日志
     const logKey = `log:${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const logData = {
       ip: ip,
@@ -224,9 +292,12 @@ async function handleRequest(request) {
       path: url.pathname + url.search,
       ua: request.headers.get('user-agent') || '',
       time: new Date().toLocaleString('zh-CN'),
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      traffic: traffic
     };
-    LOG_KV.put(logKey, JSON.stringify(logData), { expirationTtl: 60*60*24*30 });
+    await LOG_KV.put(logKey, JSON.stringify(logData), { expirationTtl: 60*60*24*30 });
+
+    return response;
   }
 
   return fetch(request);
