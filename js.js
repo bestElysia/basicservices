@@ -146,20 +146,20 @@ const HTML = `<!DOCTYPE html>
       const items = blockedData.slice(start, start + perPage);
       let html = '';
       for (const b of items) {
-        html += `<div class="flex items-center justify-between p-3 bg-red-50 rounded log-item">
+        html += \`<div class="flex items-center justify-between p-3 bg-red-50 rounded log-item">
           <label class="flex items-center flex-1 cursor-pointer">
-            <input type="checkbox" value="${b.ip}" class="checkbox mr-3">
+            <input type="checkbox" value="\${b.ip}" class="checkbox mr-3">
             <div>
-              <strong class="text-red-700">${b.ip}</strong> 
-              <span class="text-gray-600">(${b.country})</span>
-              <span class="text-xs block text-gray-500">${b.location}</span>
-              <span class="text-xs block text-gray-400">封禁于 ${b.time}</span>
+              <strong class="text-red-700">\${b.ip}</strong> 
+              <span class="text-gray-600">(\${b.country})</span>
+              <span class="text-xs block text-gray-500">\${b.location}</span>
+              <span class="text-xs block text-gray-400">封禁于 \${b.time}</span>
             </div>
           </label>
-          <button onclick="unblock('${b.ip}')" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700">
+          <button onclick="unblock('\${b.ip}')" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700">
             解封
           </button>
-        </div>`;
+        </div>\`;
       }
       document.getElementById('blocked-list').innerHTML = html || '<p class="text-gray-500 text-center">暂无封禁</p>';
       renderPagination('blocked', blockedData.length);
@@ -168,14 +168,14 @@ const HTML = `<!DOCTYPE html>
     function renderNormal() {
       let html = '';
       for (const n of normalData) {
-        html += `<div class="log-item">
+        html += \`<div class="log-item">
           <div class="flex justify-between text-xs">
-            <span><strong>${n.ip}</strong> (${n.country})</span>
-            <span class="text-gray-500">${n.time}</span>
+            <span><strong>\${n.ip}</strong> (\${n.country})</span>
+            <span class="text-gray-500">\${n.time}</span>
           </div>
-          <div>${n.path}</div>
-          <div class="text-gray-600 truncate">${n.ua}</div>
-        </div>`;
+          <div>\${n.path}</div>
+          <div class="text-gray-600 truncate">\${n.ua}</div>
+        </div>\`;
       }
       document.getElementById('normal-list').innerHTML = html || '<p class="text-gray-500 text-center">暂无记录</p>';
     }
@@ -185,7 +185,7 @@ const HTML = `<!DOCTYPE html>
       const container = document.getElementById(type + '-pagination');
       let html = '';
       for (let i = 1; i <= pages; i++) {
-        html += `<button onclick="load${type.charAt(0).toUpperCase() + type.slice(1)}(${i})" class="mx-1 px-3 py-1 rounded ${i === page[type] ? 'bg-indigo-600 text-white' : 'bg-gray-200'}">${i}</button>`;
+        html += \`<button onclick="load\${type.charAt(0).toUpperCase() + type.slice(1)}(\${i})" class="mx-1 px-3 py-1 rounded \${i === page[type] ? 'bg-indigo-600 text-white' : 'bg-gray-200'}">\${i}</button>\`;
       }
       container.innerHTML = html;
     }
