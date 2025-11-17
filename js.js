@@ -1,9 +1,77 @@
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const ip = request.headers.get('cf-connecting-ip') || '未知';
 
-const LOG_KV = ACCESS_LOGS
-const banned = BANNED_IPS
+    // 检查封禁 IP（排除 /admin 和 /api 路径）
+    if (!path.startsWith('/admin') && !path.startsWith('/api')) {
+      const isBanned = await env.BANNED_IPS.get(ip);
+      if (isBanned) {
+        return new Response('Access Denied', { status: 403 });
+      }
+    }
+
+    if (path === '/' || path === '/admin') {
+      return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    if (path === '/api/all') {
+      const { keys } = await env.ACCESS_LOGS.list({ limit: 1000 });
+      const logs = [], countryMap = {}, hourMap = Array(24).fill(0);
+      const today = new Date().toISOString().slice(0,10);
+      const seenIPs = new Set(), todayIPs = new Set();
+
+      for (const k of keys) {
+        const data = await env.ACCESS_LOGS.get(k.name);
+        if (!data) continue;
+        const l = JSON.parse(data);
+        logs.push(l);
+        countryMap[l.country] = (countryMap[l.country] || 0) + 1;
+        hourMap[new Date(l.timestamp).getHours()]++;
+        if (Date.now() - l.timestamp < 5*60*1000) seenIPs.add(l.ip);
+        if (l.time.startsWith(today)) todayIPs.add(l.ip);
+      }
+
+      logs.sort((a,b) => b.timestamp - a.timestamp);
+
+      return new Response(JSON.stringify({
+        stats: { today: logs.filter(l=>l.time.startsWith(today)).length, newUsers: todayIPs.size, total: logs.length, online: seenIPs.size },
+        country: countryMap,
+        trend: { hours: Array.from({length:24},(_,i)=>i+'时'), visits: hourMap },
+        logs: logs.slice(0,200)
+      }), { headers: { 'Content-Type': 'application/json' } });
+    }
+
+    if (path === '/api/ban') {
+      const banIP = url.searchParams.get('ip');
+      if (banIP) {
+        await env.BANNED_IPS.put(banIP, 'banned', { expirationTtl: 60*60*24*365 }); // 默认封禁 1 年，可调整
+        return new Response('OK', { status: 200 });
+      }
+      return new Response('Invalid IP', { status: 400 });
+    }
+
+    // 记录日志
+    const hostname = request.headers.get('host') || '';
+    const isTarget = ['bestxuyi.us','deyingluxury.com','chinafamoustea.com','elysia.bestxuyi.us'].some(d => hostname===d || hostname.endsWith('.'+d));
+    if (isTarget) {
+      const logKey = `log:${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const logData = {
+        ip: ip,
+        country: request.headers.get('cf-ipcountry') || 'XX',
+        domain: hostname,
+        path: url.pathname + url.search,
+        ua: request.headers.get('user-agent') || '',
+        time: new Date().toLocaleString('zh-CN'),
+        timestamp: Date.now()
+      };
+      await env.ACCESS_LOGS.put(logKey, JSON.stringify(logData), { expirationTtl: 60*60*24*30 });
+    }
+
+    return fetch(request);
+  }
+}
 
 const HTML = `<!DOCTYPE html>
 <html lang="zh" class="scroll-smooth">
@@ -158,76 +226,3 @@ const HTML = `<!DOCTYPE html>
   </script>
 </body>
 </html>`;
-
-async function handleRequest(request) {
-  const url = new URL(request.url);
-  const path = url.pathname;
-  const ip = request.headers.get('cf-connecting-ip') || '未知';
-
-  // 检查封禁 IP（排除 /admin 和 /api 路径）
-  if (!path.startsWith('/admin') && !path.startsWith('/api')) {
-    const banned = await BANNED_IPS.get(ip);
-    if (banned) {
-      return new Response('Access Denied', { status: 403 });
-    }
-  }
-
-  if (path === '/' || path === '/admin') {
-    return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
-  }
-
-  if (path === '/api/all') {
-    const { keys } = await LOG_KV.list({ limit: 1000 });
-    const logs = [], countryMap = {}, hourMap = Array(24).fill(0);
-    const today = new Date().toISOString().slice(0,10);
-    const seenIPs = new Set(), todayIPs = new Set();
-
-    for (const k of keys) {
-      const data = await LOG_KV.get(k.name);
-      if (!data) continue;
-      const l = JSON.parse(data);
-      logs.push(l);
-      countryMap[l.country] = (countryMap[l.country] || 0) + 1;
-      hourMap[new Date(l.timestamp).getHours()]++;
-      if (Date.now() - l.timestamp < 5*60*1000) seenIPs.add(l.ip);
-      if (l.time.startsWith(today)) todayIPs.add(l.ip);
-    }
-
-    logs.sort((a,b) => b.timestamp - a.timestamp);
-
-    return new Response(JSON.stringify({
-      stats: { today: logs.filter(l=>l.time.startsWith(today)).length, newUsers: todayIPs.size, total: logs.length, online: seenIPs.size },
-      country: countryMap,
-      trend: { hours: Array.from({length:24},(_,i)=>i+'时'), visits: hourMap },
-      logs: logs.slice(0,200)
-    }), { headers: { 'Content-Type': 'application/json' } });
-  }
-
-  if (path === '/api/ban') {
-    const banIP = url.searchParams.get('ip');
-    if (banIP) {
-      await BANNED_IPS.put(banIP, 'banned', { expirationTtl: 60*60*24*365 }); // 默认封禁 1 年，可调整
-      return new Response('OK', { status: 200 });
-    }
-    return new Response('Invalid IP', { status: 400 });
-  }
-
-  // 记录日志
-  const hostname = request.headers.get('host') || '';
-  const isTarget = ['bestxuyi.us','deyingluxury.com','chinafamoustea.com','elysia.bestxuyi.us'].some(d => hostname===d || hostname.endsWith('.'+d));
-  if (isTarget) {
-    const logKey = `log:${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const logData = {
-      ip: ip,
-      country: request.headers.get('cf-ipcountry') || 'XX',
-      domain: hostname,
-      path: url.pathname + url.search,
-      ua: request.headers.get('user-agent') || '',
-      time: new Date().toLocaleString('zh-CN'),
-      timestamp: Date.now()
-    };
-    LOG_KV.put(logKey, JSON.stringify(logData), { expirationTtl: 60*60*24*30 });
-  }
-
-  return fetch(request);
-}
