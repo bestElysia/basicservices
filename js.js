@@ -3,8 +3,8 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // 认证：?password=yourpass（替换 'yourpass'）
-    if (url.searchParams.get('password') !== 'yourpass') {
+    // 认证：?password=only（替换 'only'）
+    if (url.searchParams.get('password') !== 'only') {
       return new Response('Unauthorized', { status: 401 });
     }
 
@@ -94,7 +94,7 @@ async function generateStatusHTML(env) {
     <body>
       <h1>Trojan 节点状态（类似小火箭）</h1>
       ${table}
-      <a href="/add?password=yourpass">添加节点</a>
+      <a href="/add?password=only">添加节点</a>
       <script>setTimeout(() => location.reload(), 60000);</script>
     </body>
     </html>
