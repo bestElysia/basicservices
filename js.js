@@ -3,6 +3,7 @@ addEventListener('fetch', event => {
 })
 
 const LOG_KV = ACCESS_LOGS
+const BANNED_IPS = BANNED_IPS // 假设您已配置一个名为 BANNED_IPS 的 KV 命名空间
 
 const HTML = `<!DOCTYPE html>
 <html lang="zh" class="scroll-smooth">
@@ -70,8 +71,8 @@ const HTML = `<!DOCTYPE html>
     <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl p-8">
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 class="text-2xl font-bold flex items-center"><i class="ri-history-line mr-3 text-green-600"></i> 实时访问记录</h2>
-        <div class="flex gap-3">
-          <input type="text" id="search" placeholder="搜索任意内容..." class="px-4 py-3 border rounded-xl w-80 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <input type="text" id="search" placeholder="搜索任意内容..." class="px-4 py-3 border rounded-xl flex-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           <button onclick="load()" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition"><i class="ri-refresh-line mr-2"></i>刷新</button>
         </div>
       </div>
@@ -127,8 +128,21 @@ const HTML = `<!DOCTYPE html>
           </div>
           <div class="mt-2 text-gray-700 font-medium">\${l.path}</div>
           <div class="text-xs text-gray-500 mt-1 truncate max-w-4xl">\${l.ua}</div>
+          <button onclick="banIP('\${l.ip}')" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">封禁 IP</button>
         </div>
       \`).join('') || '<p class="text-center py-12 text-gray-400">暂无访问记录 ~</p>';
+    }
+
+    async function banIP(ip) {
+      if (confirm(\`确认封禁 IP: \${ip} ?\`)) {
+        const res = await fetch(\`/api/ban?ip=\${encodeURIComponent(ip)}\`);
+        if (res.ok) {
+          alert('IP 已封禁');
+          load();
+        } else {
+          alert('封禁失败');
+        }
+      }
     }
 
     function filter() {
@@ -140,6 +154,7 @@ const HTML = `<!DOCTYPE html>
 
     load();
     setInterval(load, 8000);
+    document.getElementById('search').addEventListener('input', filter);
   </script>
 </body>
 </html>`;
@@ -147,6 +162,15 @@ const HTML = `<!DOCTYPE html>
 async function handleRequest(request) {
   const url = new URL(request.url);
   const path = url.pathname;
+  const ip = request.headers.get('cf-connecting-ip') || '未知';
+
+  // 检查封禁 IP（排除 /admin 和 /api 路径）
+  if (!path.startsWith('/admin') && !path.startsWith('/api')) {
+    const banned = await BANNED_IPS.get(ip);
+    if (banned) {
+      return new Response('Access Denied', { status: 403 });
+    }
+  }
 
   if (path === '/' || path === '/admin') {
     return new Response(HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
@@ -179,13 +203,22 @@ async function handleRequest(request) {
     }), { headers: { 'Content-Type': 'application/json' } });
   }
 
+  if (path === '/api/ban') {
+    const banIP = url.searchParams.get('ip');
+    if (banIP) {
+      await BANNED_IPS.put(banIP, 'banned', { expirationTtl: 60*60*24*365 }); // 默认封禁 1 年，可调整
+      return new Response('OK', { status: 200 });
+    }
+    return new Response('Invalid IP', { status: 400 });
+  }
+
   // 记录日志
   const hostname = request.headers.get('host') || '';
   const isTarget = ['bestxuyi.us','deyingluxury.com','chinafamoustea.com','elysia.bestxuyi.us'].some(d => hostname===d || hostname.endsWith('.'+d));
   if (isTarget) {
     const logKey = `log:${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const logData = {
-      ip: request.headers.get('cf-connecting-ip') || '未知',
+      ip: ip,
       country: request.headers.get('cf-ipcountry') || 'XX',
       domain: hostname,
       path: url.pathname + url.search,
