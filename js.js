@@ -91,9 +91,9 @@ async function checkNode(host, port, nodeData) {
     const protocol = nodeData.allowInsecure ? 'http' : 'https';
     const response = await fetch(`${protocol}://${host}:${port}`, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
     const latency = Date.now() - start;
-    return { status: response.ok ? '在线' : '在线', latency };
+    return { status: response.ok ? '在线' : '离线', latency };
   } catch {
-    return { status: '在线', latency: 'N/A' };
+    return { status: '离线', latency: 'N/A' };
   }
 }
 
@@ -107,7 +107,8 @@ async function generateStatusHTML(env) {
     for (const key of keys.keys) {
       const data = JSON.parse(await env.NODE_STATUS_KV.get(key.name));
       const time = new Date(data.timestamp).toLocaleString('zh-CN');
-      table += `<tr><td>${key.name}</td><td>${data.status}</td><td>${data.latency}</td><td>${time}</td></tr>`;
+      const displayLatency = typeof data.latency === 'number' ? `${data.latency} ms` : data.latency;
+      table += `<tr><td>${key.name}</td><td>${data.status}</td><td>${displayLatency}</td><td>${time}</td></tr>`;
     }
   } catch (e) {
     table += `<tr><td colspan="4">错误: KV 加载失败 (${e.message})。请检查绑定。</td></tr>`;
@@ -134,7 +135,17 @@ async function generateStatusHTML(env) {
       ${table}
       <a href="/add?password=only">添加节点</a>
       <a href="/test-cron?password=only">手动更新状态</a>
-      <script>setTimeout(() => location.reload(), 60000);</script>
+      <script>
+        setTimeout(() => location.reload(), 60000);
+        document.addEventListener('keydown', function(e) {
+          if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
+            e.preventDefault();
+          }
+        });
+        document.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+        });
+      </script>
     </body>
     </html>
   `;
@@ -173,6 +184,16 @@ function generateAddFormHTML() {
         <button type="submit">批量导入</button>
       </form>
       <a href="/?password=only">返回主页</a>
+      <script>
+        document.addEventListener('keydown', function(e) {
+          if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
+            e.preventDefault();
+          }
+        });
+        document.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+        });
+      </script>
     </body>
     </html>
   `;
