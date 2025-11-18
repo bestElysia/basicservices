@@ -35,8 +35,8 @@ export default {
         if (!data) continue;
         const l = JSON.parse(data);
         logs.push(l);
+        countryMap[l.country] = (countryMap[l.country] || 0) + 1;
         if (l.time.slice(0, 10) === today) {
-          countryMap[l.country] = (countryMap[l.country] || 0) + 1;
           hourMap[new Date(l.timestamp).getHours()]++;
           todayIPs.add(l.ip);
           if (l.duration !== undefined) {
