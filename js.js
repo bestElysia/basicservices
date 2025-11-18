@@ -28,6 +28,7 @@ export default {
       const logs = [], countryMap = {}, hourMap = Array(24).fill(0);
       const today = new Date().toISOString().slice(0,10);
       const seenIPs = new Set(), todayIPs = new Set();
+      let sumDuration = 0, durationCount = 0;
 
       for (const k of keys) {
         const data = await env.ACCESS_LOGS.get(k.name);
@@ -38,6 +39,10 @@ export default {
           countryMap[l.country] = (countryMap[l.country] || 0) + 1;
           hourMap[new Date(l.timestamp).getHours()]++;
           todayIPs.add(l.ip);
+          if (l.duration !== undefined) {
+            sumDuration += l.duration;
+            durationCount++;
+          }
         }
         if (Date.now() - l.timestamp < 5*60*1000) seenIPs.add(l.ip);
       }
@@ -55,19 +60,22 @@ export default {
       const baseNewUsers = 55;
       const baseTotal = 56565;
       const baseOnline = 32;
+      const baseAverageDuration = 150;
 
       // 计算实时数据并乘以8然后加上基础数据
       const realtimeToday = logs.filter(l => l.time.slice(0, 10) === today).length * 8;
       const realtimeNewUsers = todayIPs.size * 8;
       const realtimeTotal = keys.length * 8;
       const realtimeOnline = seenIPs.size * 8;
+      const realtimeAverageDuration = durationCount > 0 ? Math.round(sumDuration / durationCount) : 0;
 
       return new Response(JSON.stringify({
         stats: { 
           today: baseToday + realtimeToday, 
           newUsers: baseNewUsers + realtimeNewUsers, 
           total: baseTotal + realtimeTotal, 
-          online: baseOnline + realtimeOnline 
+          online: baseOnline + realtimeOnline,
+          averageDuration: baseAverageDuration + realtimeAverageDuration
         },
         country: countryMap,
         trend: { hours: Array.from({length:24},(_,i)=>i+'时'), visits: adjustedHourMap },
@@ -87,6 +95,11 @@ export default {
     // 记录日志
     const hostname = request.headers.get('host') || '';
     const isTarget = ['bestxuyi.us','deyingluxury.com','chinafamoustea.com','elysia.bestxuyi.us'].some(d => hostname===d || hostname.endsWith('.'+d));
+
+    const start = performance.now();
+    const response = await fetch(request);
+    const duration = performance.now() - start;
+
     if (isTarget) {
       const logKey = `log:${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const logData = {
@@ -96,12 +109,13 @@ export default {
         path: url.pathname + url.search,
         ua: request.headers.get('user-agent') || '',
         time: new Date().toISOString().slice(0,19).replace('T', ' '),
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        duration: Math.round(duration)
       };
       await env.ACCESS_LOGS.put(logKey, JSON.stringify(logData), { expirationTtl: 60*60*24*30 });
     }
 
-    return fetch(request);
+    return response;
   }
 }
 
@@ -131,7 +145,7 @@ const HTML = `<!DOCTYPE html>
     </div>
 
     <!-- 统计卡片（玻璃拟态） -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-12">
       <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
         <i class="ri-eye-line text-4xl text-indigo-600 mb-3"></i>
         <div class="text-4xl font-bold text-gray-800" id="today">-</div>
@@ -151,6 +165,11 @@ const HTML = `<!DOCTYPE html>
         <i class="ri-user-voice-line text-4xl text-orange-600 mb-3"></i>
         <div class="text-4xl font-bold text-gray-800" id="online">-</div>
         <div class="text-gray-600">当前在线</div>
+      </div>
+      <div class="glass rounded-2xl p-6 text-center card-hover transition-all">
+        <i class="ri-timer-line text-4xl text-blue-600 mb-3"></i>
+        <div class="text-4xl font-bold text-gray-800" id="averageDuration">-</div>
+        <div class="text-gray-600">平均响应时间</div>
       </div>
     </div>
 
@@ -192,6 +211,7 @@ const HTML = `<!DOCTYPE html>
       document.getElementById('newUsers').textContent = data.stats.newUsers.toLocaleString();
       document.getElementById('total').textContent = data.stats.total.toLocaleString();
       document.getElementById('online').textContent = data.stats.online;
+      document.getElementById('averageDuration').textContent = data.stats.averageDuration + ' ms';
 
       // 国家分布
       if (chartCountry) chartCountry.destroy();
@@ -212,7 +232,15 @@ const HTML = `<!DOCTYPE html>
           labels: data.trend.hours,
           datasets: [{ label: '访问量', data: data.trend.visits, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', tension: 0.4, fill: true }]
         },
-        options: { responsive: true }
+        options: { 
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              min: 0
+            }
+          }
+        }
       });
 
       // 日志
@@ -228,6 +256,7 @@ const HTML = `<!DOCTYPE html>
           </div>
           <div class="mt-2 text-gray-700 font-medium">\${l.path}</div>
           <div class="text-xs text-gray-500 mt-1 truncate max-w-4xl">\${l.ua}</div>
+          <div class="text-xs text-gray-500 mt-1">Duration: \${l.duration || 'N/A'} ms</div>
           <button onclick="banIP('\${l.ip}')" class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">封禁 IP</button>
         </div>
       \`).join('') || '<p class="text-center py-12 text-gray-400">暂无访问记录 ~</p>';
