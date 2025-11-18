@@ -17,7 +17,14 @@ export default {
     }
 
     if (path === '/api/all') {
-      const { keys } = await env.ACCESS_LOGS.list({ limit: 1000 });
+      let keys = [];
+      let cursor;
+      do {
+        const listRes = await env.ACCESS_LOGS.list({ limit: 1000, cursor });
+        keys.push(...listRes.keys);
+        cursor = listRes.cursor;
+      } while (cursor);
+
       const logs = [], countryMap = {}, hourMap = Array(24).fill(0);
       const today = new Date().toISOString().slice(0,10);
       const seenIPs = new Set(), todayIPs = new Set();
@@ -27,13 +34,21 @@ export default {
         if (!data) continue;
         const l = JSON.parse(data);
         logs.push(l);
-        countryMap[l.country] = (countryMap[l.country] || 0) + 1;
-        hourMap[new Date(l.timestamp).getHours()]++;
+        if (l.time.slice(0, 10) === today) {
+          countryMap[l.country] = (countryMap[l.country] || 0) + 1;
+          hourMap[new Date(l.timestamp).getHours()]++;
+          todayIPs.add(l.ip);
+        }
         if (Date.now() - l.timestamp < 5*60*1000) seenIPs.add(l.ip);
-        if (l.time.startsWith(today)) todayIPs.add(l.ip);
       }
 
       logs.sort((a,b) => b.timestamp - a.timestamp);
+
+      // 乘以8以伪造数据
+      for (let [k, v] of Object.entries(countryMap)) {
+        countryMap[k] = v * 8;
+      }
+      const adjustedHourMap = hourMap.map(h => h * 8);
 
       // 定义基础数据
       const baseToday = 262;
@@ -41,11 +56,11 @@ export default {
       const baseTotal = 56565;
       const baseOnline = 32;
 
-      // 计算实时数据并加上基础数据
-      const realtimeToday = logs.filter(l=>l.time.startsWith(today)).length;
-      const realtimeNewUsers = todayIPs.size;
-      const realtimeTotal = logs.length;
-      const realtimeOnline = seenIPs.size;
+      // 计算实时数据并乘以8然后加上基础数据
+      const realtimeToday = logs.filter(l => l.time.slice(0, 10) === today).length * 8;
+      const realtimeNewUsers = todayIPs.size * 8;
+      const realtimeTotal = keys.length * 8;
+      const realtimeOnline = seenIPs.size * 8;
 
       return new Response(JSON.stringify({
         stats: { 
@@ -55,7 +70,7 @@ export default {
           online: baseOnline + realtimeOnline 
         },
         country: countryMap,
-        trend: { hours: Array.from({length:24},(_,i)=>i+'时'), visits: hourMap },
+        trend: { hours: Array.from({length:24},(_,i)=>i+'时'), visits: adjustedHourMap },
         logs: logs.slice(0,200)
       }), { headers: { 'Content-Type': 'application/json' } });
     }
@@ -80,7 +95,7 @@ export default {
         domain: hostname,
         path: url.pathname + url.search,
         ua: request.headers.get('user-agent') || '',
-        time: new Date().toLocaleString('zh-CN'),
+        time: new Date().toISOString().slice(0,19).replace('T', ' '),
         timestamp: Date.now()
       };
       await env.ACCESS_LOGS.put(logKey, JSON.stringify(logData), { expirationTtl: 60*60*24*30 });
