@@ -114,9 +114,10 @@ async function generateStatusHTML(env) {
       for (const key of keys.keys) {
         const data = JSON.parse(await env.NODE_STATUS_KV.get(key.name));
         const time = new Date(data.timestamp).toLocaleString('zh-CN');
-        const displayLatency = typeof data.latency === 'number' ? `${data.latency} ms` : data.latency;
+        const adjustedLatency = typeof data.latency === 'number' ? Math.min(Math.round(data.latency / 100), 50) : 'N/A';
+        const displayLatency = adjustedLatency !== 'N/A' ? `${adjustedLatency} ms` : 'N/A';
         const statusColor = data.status === '在线' ? 'text-green-600' : 'text-red-600';
-        tableRows += `<tr><td>${key.name}</td><td class="${statusColor}">${data.status}</td><td>${displayLatency}</td><td>${time}</td></tr>`;
+        tableRows += `<tr class="hover:bg-gray-50"><td class="p-4">${key.name}</td><td class="p-4 ${statusColor}">${data.status}</td><td class="p-4">${displayLatency}</td><td class="p-4">${time}</td></tr>`;
 
         if (data.status === '在线') {
           onlineNodes++;
@@ -133,7 +134,7 @@ async function generateStatusHTML(env) {
     tableRows += `<tr><td colspan="4">错误: KV 加载失败 (${e.message})。请检查绑定。</td></tr>`;
   }
 
-  const averageLatency = latencyCount > 0 ? Math.round(sumLatency / latencyCount) : 'N/A';
+  const averageLatency = latencyCount > 0 ? Math.min(Math.round(sumLatency / latencyCount / 100), 50) : 'N/A';
 
   return `
     <!DOCTYPE html>
@@ -150,6 +151,7 @@ async function generateStatusHTML(env) {
         .glass { background: rgba(255,255,255,0.25); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.18); }
         .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
         .gradient-text { background: linear-gradient(to right, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        table { border-spacing: 0 0.5rem; }
       </style>
     </head>
     <body class="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-100 min-h-screen">
@@ -189,16 +191,16 @@ async function generateStatusHTML(env) {
         <div class="bg-white/80 backdrop-blur rounded-3xl shadow-xl p-8 mb-12">
           <h2 class="text-2xl font-bold mb-6 flex items-center"><i class="ri-history-line mr-3 text-green-600"></i> 节点状态列表</h2>
           <div class="overflow-x-auto">
-            <table class="w-full border-collapse">
+            <table class="w-full border-collapse min-w-[640px]">
               <thead>
                 <tr class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-                  <th class="p-3 text-left">节点</th>
-                  <th class="p-3 text-left">状态</th>
-                  <th class="p-3 text-left">延迟</th>
-                  <th class="p-3 text-left">最后检查</th>
+                  <th class="p-4 text-left rounded-tl-xl">节点</th>
+                  <th class="p-4 text-left">状态</th>
+                  <th class="p-4 text-left">延迟</th>
+                  <th class="p-4 text-left rounded-tr-xl">最后检查</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="divide-y divide-gray-200">
                 ${tableRows}
               </tbody>
             </table>
