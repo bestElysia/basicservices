@@ -22,12 +22,13 @@
       --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
       --text-main: #1d1d1f;
       --text-secondary: #86868b;
-      --blur-amt: 20px;
+      --accent-blue: #007aff;
+      --blur-amt: 25px;
+      --anim-spring: cubic-bezier(0.19, 1, 0.22, 1); /* macOS 风格弹簧动画 */
     }
 
-    /* 基础设置：macOS 字体栈 */
     body {
-      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%); /* 轻微渐变以突显玻璃效果 */
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
       margin: 0;
       padding: 0;
@@ -36,155 +37,276 @@
       min-height: 100vh;
       color: var(--text-main);
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden; /* 防止水平滚动 */
+    }
+    
+    /* 当菜单打开时禁止滚动 */
+    body.menu-open {
+        overflow: hidden;
     }
 
     html {
       scroll-behavior: smooth;
     }
 
-    /* ================= Header ================= */
+    /* ================= Header (重构版) ================= */
     header {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      z-index: 1000;
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      height: 80px; /* 固定高度 */
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5%;
+      box-sizing: border-box;
+      transition: all 0.5s var(--anim-spring);
     }
 
-    /* 滚动时 Header 变为磨砂条 */
     header.scrolled {
-      background: rgba(255, 255, 255, 0.75);
+      background: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      height: 60px; /* 滚动收缩 */
       border-bottom: 1px solid rgba(255,255,255,0.5);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
     }
 
-    .brand-header {
-      text-align: center;
-      padding: 20px 0;
-      transition: all 0.5s ease;
-      opacity: 1;
-      max-height: 200px;
+    /* 品牌区域 */
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 2001; /* 确保在菜单层之上 */
     }
 
-    header.scrolled .brand-header {
-      opacity: 0;
-      max-height: 0;
-      padding: 0;
-      overflow: hidden;
+    .brand-container img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: width 0.5s var(--anim-spring);
     }
 
-    .brand-header img {
-      max-width: 80px;
-      height: auto;
-      border-radius: 18px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    .brand-text-small {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.5s var(--anim-spring);
+        display: none; /* 默认隐藏，滚动或移动端显示简单标题 */
     }
 
-    .brand-text {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 8px;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-    }
-
-    /* ================= Navigation ================= */
-    nav {
-      padding: 15px 0;
-      transition: padding 0.3s;
+    header.scrolled .brand-container img {
+        width: 32px;
+        height: 32px;
     }
     
-    header.scrolled nav {
-      padding: 12px 0;
+    header.scrolled .brand-text-small {
+        opacity: 1;
+        transform: translateX(0);
+        display: block;
     }
 
-    nav ul {
-      list-style: none;
+    /* ================= Hamburger Button (液态玻璃按钮) ================= */
+    .menu-toggle {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
       display: flex;
+      flex-direction: column;
       justify-content: center;
-      margin: 0;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      z-index: 2002; /* 最高层级 */
+      transition: transform 0.4s var(--anim-spring), background 0.3s;
+    }
+
+    .menu-toggle:hover {
+        background: rgba(255, 255, 255, 0.8);
+        transform: scale(1.05);
+    }
+
+    .menu-toggle span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background-color: #1d1d1f;
+      border-radius: 2px;
+      transition: all 0.4s var(--anim-spring);
+      transform-origin: center;
+    }
+
+    /* 汉堡变 X 动画 */
+    .menu-toggle.active span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+    .menu-toggle.active span:nth-child(2) {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    .menu-toggle.active span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* ================= Full Screen Overlay Menu (PC & Mobile) ================= */
+    .nav-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(35px) saturate(180%); /* 极度模糊 */
+      -webkit-backdrop-filter: blur(35px) saturate(180%);
+      z-index: 2000; /* 在Header下面，但覆盖Main */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      /* 初始放大效果，打开时缩小回1 */
+      transform: scale(1.1);
+      transition: all 0.5s var(--anim-spring);
+    }
+
+    .nav-overlay.open {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+    }
+
+    .nav-list {
+      list-style: none;
       padding: 0;
-      gap: 10px;
-      flex-wrap: wrap;
+      margin: 0;
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
     }
 
-    nav li {
-      position: relative;
+    .nav-item {
+      margin: 15px 0;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s var(--anim-spring);
     }
+    
+    /* 菜单打开时的交错动画 (Stagger) */
+    .nav-overlay.open .nav-item:nth-child(1) { transition-delay: 0.1s; opacity: 1; transform: translateY(0); }
+    .nav-overlay.open .nav-item:nth-child(2) { transition-delay: 0.15s; opacity: 1; transform: translateY(0); }
+    .nav-overlay.open .nav-item:nth-child(3) { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
+    .nav-overlay.open .nav-item:nth-child(4) { transition-delay: 0.25s; opacity: 1; transform: translateY(0); }
+    .nav-overlay.open .nav-item:nth-child(5) { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
 
-    /* 导航链接 */
-    nav a {
+    .nav-link {
+      font-size: 28px;
+      font-weight: 700;
       color: var(--text-main);
       text-decoration: none;
-      font-weight: 500;
-      font-size: 15px;
-      padding: 8px 16px;
-      border-radius: 20px;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       display: inline-block;
+      position: relative;
+      padding: 10px 20px;
+      transition: color 0.3s;
     }
 
-    nav a:hover {
-      background: rgba(0, 0, 0, 0.05);
-      transform: scale(1.02);
+    .nav-link:hover {
+      color: var(--accent-blue);
     }
 
-    /* 下拉菜单 */
-    .submenu {
-      display: none;
-      position: absolute;
-      top: 120%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      border-radius: 14px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      padding: 6px;
-      min-width: 140px;
-      z-index: 1001;
-      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Tracking 子菜单 (手风琴风格) */
+    .sub-menu-container {
+      height: 0;
+      overflow: hidden;
+      transition: height 0.5s var(--anim-spring);
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 16px;
+      margin-top: 10px;
+      width: 90%;
+      margin-left: auto;
+      margin-right: auto;
     }
 
-    @keyframes popIn {
-      from { opacity: 0; transform: translateX(-50%) scale(0.9); }
-      to { opacity: 1; transform: translateX(-50%) scale(1); }
+    .sub-menu-container.expanded {
+      height: 260px; /* 根据子项数量调整 */
+      border: 1px solid rgba(255,255,255,0.5);
     }
 
-    .dropdown.active .submenu {
+    .sub-menu-list {
+      list-style: none;
+      padding: 15px 0;
+      margin: 0;
+    }
+
+    .sub-menu-list li a {
       display: block;
+      padding: 10px 0;
+      font-size: 16px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: transform 0.3s;
     }
 
-    .submenu li { width: 100%; }
-
-    .submenu a {
-      display: block;
-      text-align: center;
-      font-size: 13px;
-      border-radius: 8px;
-      padding: 8px 12px;
+    .sub-menu-list li a:hover {
+      color: var(--text-main);
+      transform: translateX(5px);
     }
     
-    .submenu a:hover {
-      background: #007aff;
-      color: white;
+    /* 追踪按钮的小箭头 */
+    .arrow {
+        display: inline-block;
+        font-size: 14px;
+        margin-left: 8px;
+        transition: transform 0.3s;
+        vertical-align: middle;
+    }
+    
+    .nav-item.active-accordion .arrow {
+        transform: rotate(180deg);
     }
 
-    /* ================= Main Content ================= */
+    /* ================= Main Content Adjustment ================= */
     main {
       flex: 1;
-      margin-top: 160px;
+      margin-top: 120px; /* 初始距离Header的高度 */
       padding: 0 20px;
       transition: margin-top 0.5s ease;
     }
 
-    body.scrolled main {
-      margin-top: 80px;
+    /* 大标题区域 (Brand Text) - 移到Main里作为页面标题 */
+    .hero-text-area {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-top: 20px;
+      opacity: 1;
+      transition: opacity 0.5s;
+    }
+    
+    .hero-text-area img {
+        max-width: 100px;
+        border-radius: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .hero-text-area p {
+        color: var(--text-secondary);
+        font-size: 15px;
+    }
+
+    body.scrolled .hero-text-area {
+        /* 可以选择在滚动时做些淡出效果，或者保持不变 */
     }
 
     /* Banner */
@@ -200,76 +322,41 @@
       overflow: hidden;
       opacity: 0;
       transform: scale(0.98);
-      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.8s var(--anim-spring);
     }
-
-    .banner.visible {
-      opacity: 1;
-      transform: scale(1);
-    }
-
+    .banner.visible { opacity: 1; transform: scale(1); }
     .banner::before {
-      content: '';
-      position: absolute;
-      inset: 0;
+      content: ''; position: absolute; inset: 0;
       background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
       pointer-events: none;
     }
 
-    /* =========================================
-       Categories Title (文字部分改为液态卡片)
-       =========================================
-    */
+    /* Categories Section (液态卡片) */
     .categories-section {
       text-align: center;
       padding: 40px;
       margin: 0 auto 40px;
       max-width: 800px;
-      
-      /* 新增：液态玻璃样式 */
-      background: rgba(255, 255, 255, 0.5); /* 半透明白底 */
-      backdrop-filter: blur(20px);          /* 磨砂模糊 */
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-radius: 24px;                  /* 大圆角 */
-      border: 1px solid rgba(255, 255, 255, 0.6); /* 玻璃边缘光泽 */
-      box-shadow: 
-        0 10px 30px rgba(0, 0, 0, 0.05), 
-        inset 0 0 0 1px rgba(255, 255, 255, 0.5); /* 内发光和柔和阴影 */
-
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
       opacity: 0;
       transform: translateY(20px);
       transition: all 0.8s ease;
     }
-
-    .categories-section.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* 鼠标悬停时微动，增加质感 */
-    .categories-section:hover {
-        background: rgba(255, 255, 255, 0.65);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
-    }
-
+    .categories-section.visible { opacity: 1; transform: translateY(0); }
+    .categories-section:hover { background: rgba(255, 255, 255, 0.65); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08); }
     .categories-title {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 16px;
+      font-size: 32px; font-weight: 700; margin-bottom: 16px;
       background: linear-gradient(135deg, #000 0%, #333 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
+    .categories-text { font-size: 17px; line-height: 1.6; color: #424245; margin: 8px 0; }
 
-    .categories-text {
-      font-size: 17px;
-      line-height: 1.6;
-      color: #424245; /* 加深颜色以在玻璃背景上更清晰 */
-      margin: 8px 0;
-      font-weight: 400;
-    }
-
-    /* ================= Product Grid ================= */
+    /* Grid */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -277,167 +364,71 @@
       max-width: 1200px;
       margin: 0 auto 60px;
     }
-
     .item {
-      position: relative;
-      border-radius: 24px;
+      position: relative; border-radius: 24px;
       background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+      backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
       border: 1px solid rgba(255, 255, 255, 0.6);
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
       padding: 15px;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      opacity: 0;
-      transform: translateY(40px);
+      transition: all 0.4s var(--anim-spring);
+      opacity: 0; transform: translateY(40px);
       cursor: pointer;
-      text-decoration: none;
     }
-    
-    .item a {
-        text-decoration: none;
-        display: block;
-        height: 100%;
-    }
-
-    .item.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
+    .item a { text-decoration: none; display: block; height: 100%; }
+    .item.visible { opacity: 1; transform: translateY(0); }
     .item:hover {
       background: rgba(255, 255, 255, 0.7);
       transform: translateY(-10px) scale(1.02);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
     }
-
-    .image-frame {
-      border-radius: 16px;
-      overflow: hidden;
-      position: relative;
-      aspect-ratio: 1 / 1;
-    }
-
-    .item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-      display: block;
-    }
-
-    .item:hover img {
-      transform: scale(1.12);
-    }
-
+    .image-frame { border-radius: 16px; overflow: hidden; position: relative; aspect-ratio: 1 / 1; }
+    .item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--anim-spring); display: block; }
+    .item:hover img { transform: scale(1.12); }
     .item-label {
-      display: block;
-      margin-top: 15px;
-      text-align: center;
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-main);
-      letter-spacing: 0.01em;
-      position: static;
-      text-shadow: none;
+      display: block; margin-top: 15px; text-align: center;
+      font-size: 16px; font-weight: 600; color: var(--text-main);
     }
 
-    /* ================= Footer ================= */
+    /* Footer */
     footer {
-      margin: 40px auto;
-      width: 90%;
-      max-width: 800px;
-      padding: 20px;
-      text-align: center;
+      margin: 40px auto; width: 90%; max-width: 800px; padding: 20px; text-align: center;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.4);
-      color: var(--text-secondary);
-      font-size: 12px;
-      transition: opacity 0.6s ease;
-      opacity: 0;
+      color: var(--text-secondary); font-size: 12px;
+      transition: opacity 0.6s ease; opacity: 0;
     }
-
     footer.visible { opacity: 1; }
 
-    /* ================= Marketing Modal ================= */
+    /* Marketing Modal */
     #marketingModal {
-      display: none;
-      position: fixed;
-      z-index: 2000;
-      left: 50%;
-      top: 50%;
+      display: none; position: fixed; z-index: 3000; left: 50%; top: 50%;
       transform: translate(-50%, -50%) scale(0.9);
       background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(40px) saturate(180%);
-      -webkit-backdrop-filter: blur(40px) saturate(180%);
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
+      border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.5);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      padding: 30px;
-      width: 90%;
-      max-width: 360px;
-      text-align: center;
-      opacity: 0;
-      transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      padding: 30px; width: 90%; max-width: 360px; text-align: center;
+      opacity: 0; transition: all 0.5s var(--anim-spring);
     }
-
-    #marketingModal.show {
-      display: block;
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-
-    #marketingModal img {
-      width: 100%;
-      border-radius: 16px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-    }
-
-    #marketingModal h2 {
-      font-size: 22px;
-      margin: 0 0 10px 0;
-      color: var(--text-main);
-    }
-
-    #marketingModal p {
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-      margin-bottom: 12px;
-    }
+    #marketingModal.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    #marketingModal img { width: 100%; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+    #marketingModal h2 { font-size: 22px; margin: 0 0 10px 0; color: var(--text-main); }
+    #marketingModal p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
 
     /* ================= Mobile Optimization ================= */
     @media (max-width: 768px) {
-      main {
-        margin-top: 140px;
-        padding: 0 15px;
-      }
-      
-      /* 移动端文字卡片样式调整 */
-      .categories-section {
-        padding: 25px 15px; /* 稍微减小内边距 */
-        width: 90%; /* 宽度对齐 */
-      }
-
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-      }
-
+      header { padding: 0 20px; height: 70px; }
+      main { margin-top: 90px; padding: 0 15px; }
+      .categories-section { padding: 25px 15px; width: 90%; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
       .item { padding: 10px; }
-
       .categories-title { font-size: 24px; }
-
-      .banner {
-        height: 220px;
-        background-attachment: scroll;
-      }
-      
-      .brand-header img { max-width: 60px; }
+      .banner { height: 220px; background-attachment: scroll; }
+      .menu-toggle { width: 44px; height: 44px; }
+      .nav-link { font-size: 24px; }
     }
   </style>
 
@@ -454,21 +445,13 @@
 
     let idleTimer;
     const idleTime = 5000; 
-
     function resetIdleTimer() {
       clearTimeout(idleTimer);
       showCrisp();
       idleTimer = setTimeout(hideCrisp, idleTime);
     }
-
-    function hideCrisp() {
-      if (window.$crisp) { window.$crisp.push(["do", "chat:hide"]); }
-    }
-
-    function showCrisp() {
-      if (window.$crisp) { window.$crisp.push(["do", "chat:show"]); }
-    }
-
+    function hideCrisp() { if (window.$crisp) { window.$crisp.push(["do", "chat:hide"]); } }
+    function showCrisp() { if (window.$crisp) { window.$crisp.push(["do", "chat:show"]); } }
     ["scroll", "mousemove", "keydown", "click", "touchstart"].forEach(evt => {
       document.addEventListener(evt, resetIdleTimer, { passive: true });
     });
@@ -478,32 +461,46 @@
 <body>
 
     <header>
-        <div class="brand-header">
-            <img src="assets/brand.jpg" alt="DeyingLuxury">
-            <p class="brand-text">2025 Fall - Winter Collection</p>
+        <div class="brand-container">
+            <img src="assets/brand.jpg" alt="Logo">
+            <span class="brand-text-small">Deying Luxury</span>
         </div>
 
-        <nav>
-            <ul>
-                <li><a href="index.html">Product</a></li>
-                <li><a href="feedback.html">Feedback</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="luxury.html">Official</a></li>
-                <li class="dropdown">
-                    <a href="#" onclick="return false;">Tracking ▾</a>
-                    <ul class="submenu">
+        <div class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <div class="nav-overlay" id="navOverlay">
+        <ul class="nav-list">
+            <li class="nav-item"><a href="index.html" class="nav-link">Product</a></li>
+            <li class="nav-item"><a href="feedback.html" class="nav-link">Feedback</a></li>
+            <li class="nav-item"><a href="about.html" class="nav-link">About</a></li>
+            <li class="nav-item"><a href="luxury.html" class="nav-link">Official</a></li>
+            
+            <li class="nav-item" id="trackingItem">
+                <a href="#" class="nav-link" onclick="toggleTracking(event)">Tracking <span class="arrow">▾</span></a>
+                <div class="sub-menu-container" id="trackingSubMenu">
+                    <ul class="sub-menu-list">
                         <li><a href="https://www.17track.net/en" target="_blank">17TRACK</a></li>
                         <li><a href="https://www.fedex.com/en-us/home.html" target="_blank">FedEx</a></li>
                         <li><a href="https://www.dhl.com/fr-fr/home.html" target="_blank">DHL</a></li>
                         <li><a href="https://www.aramex.com/sa/en" target="_blank">Aramex</a></li>
                         <li><a href="https://www.ups.com/track?loc=en_US&requester=ST/" target="_blank">UPS</a></li>
                     </ul>
-                </li>
-            </ul>
-        </nav>
-    </header>
+                </div>
+            </li>
+        </ul>
+    </div>
 
     <main>
+        <div class="hero-text-area">
+            <img src="assets/brand.jpg" alt="DeyingLuxury">
+            <h1 style="margin: 10px 0; font-size: 22px;">2025 Fall - Winter Collection</h1>
+        </div>
+
         <div class="banner"></div>
 
         <div class="categories-section">
@@ -515,97 +512,73 @@
         <div class="grid">
             <div class="item">
                 <a href="https://mbags.qiqiyg.com/defaulten.html" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/womenbag.jpg" alt="Women's Bag">
-                    </div>
+                    <div class="image-frame"><img src="assets/womenbag.jpg" alt="Bag"></div>
                     <span class="item-label">Women's Bag</span>
                 </a>
             </div>
             <div class="item">
                 <a href="https://ss8899.x.yupoo.com/" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/womenshoes.jpg" alt="Women's Shoes">
-                    </div>
+                    <div class="image-frame"><img src="assets/womenshoes.jpg" alt="Shoes"></div>
                     <span class="item-label">Women's Shoes</span>
                 </a>
             </div>
             <div class="item">
                 <a href="https://alina-fashion-store2.x.yupoo.com/" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/womenclothing.jpg" alt="Women's Clothing">
-                    </div>
+                    <div class="image-frame"><img src="assets/womenclothing.jpg" alt="Clothing"></div>
                     <span class="item-label">Women's Wear</span>
                 </a>
             </div>
             <div class="item">
                 <a href="https://a202007051508096050207630.szwego.com/weshop/search/A202007051508096050207630?filterText=shoes" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/menshoes.jpg" alt="Men's Shoes">
-                    </div>
+                    <div class="image-frame"><img src="assets/menshoes.jpg" alt="Men Shoes"></div>
                     <span class="item-label">Men's Shoes</span>
                 </a>
             </div>
             <div class="item">
                 <a href="https://407131796.x.yupoo.com/albums" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/menclothing1.jpg" alt="Men's Clothing">
-                    </div>
+                    <div class="image-frame"><img src="assets/menclothing1.jpg" alt="Men Clothing"></div>
                     <span class="item-label">Men's Wear I</span>
                 </a>
             </div>
             <div class="item">
                 <a href="https://cpdk8888.x.yupoo.com/albums?tab=gallery" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/menclothing2.jpg" alt="Men's Clothing">
-                    </div>
+                    <div class="image-frame"><img src="assets/menclothing2.jpg" alt="Men Clothing"></div>
                     <span class="item-label">Men's Wear II</span>
                 </a>
             </div>
             <div class="item">
                 <a href="https://a202007051508096050207630.szwego.com/weshop/search/A202007051508096050207630?filterText=watch" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/watches.jpg" alt="Watches">
-                    </div>
+                    <div class="image-frame"><img src="assets/watches.jpg" alt="Watches"></div>
                     <span class="item-label">Timepieces</span>
                 </a>
             </div>
-             <div class="item">
+            <div class="item">
                 <a href="https://351164.x.yupoo.com/albums" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/jewelry.jpg" alt="Jewelry">
-                    </div>
+                    <div class="image-frame"><img src="assets/jewelry.jpg" alt="Jewelry"></div>
                     <span class="item-label">Jewelry</span>
                 </a>
             </div>
-             <div class="item">
+            <div class="item">
                 <a href="https://a2017121901110006604.szwego.com/static/index.html?t=1735034741602#/goods_list/A2017121901110006604?tagId=23105351" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/caps.jpg" alt="Caps">
-                    </div>
+                    <div class="image-frame"><img src="assets/caps.jpg" alt="Caps"></div>
                     <span class="item-label">Headwear</span>
                 </a>
             </div>
-             <div class="item">
+            <div class="item">
                 <a href="https://shijuemaoyi888.x.yupoo.com/albums" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/belts.jpg" alt="Belts">
-                    </div>
+                    <div class="image-frame"><img src="assets/belts.jpg" alt="Belts"></div>
                     <span class="item-label">Belts</span>
                 </a>
             </div>
             <div class="item">
                 <a href="https://weinifuwu14.x.yupoo.com/albums?tab=gallery" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/sunglasses.jpg" alt="Sunglasses">
-                    </div>
+                    <div class="image-frame"><img src="assets/sunglasses.jpg" alt="Sunglasses"></div>
                     <span class="item-label">Eyewear</span>
                 </a>
             </div>
              <div class="item">
                 <a href="https://xiaobei12.x.yupoo.com/contact" target="_blank">
-                    <div class="image-frame">
-                        <img src="assets/menshoes.jpg" alt="Men's bag">
-                    </div>
+                    <div class="image-frame"><img src="assets/menshoes.jpg" alt="Men's bag"></div>
                     <span class="item-label">Men's Bags</span>
                 </a>
             </div>
@@ -625,79 +598,90 @@
     </div>
 
     <script>
+        // 1. 菜单逻辑 (Hamburger Logic)
+        const menuToggle = document.getElementById('menuToggle');
+        const navOverlay = document.getElementById('navOverlay');
+        const body = document.body;
+
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active'); // 按钮变X
+            navOverlay.classList.toggle('open');   // 菜单显示
+            body.classList.toggle('menu-open');    // 禁止背景滚动
+        });
+
+        // 点击链接后自动关闭菜单
+        document.querySelectorAll('.nav-link:not([onclick])').forEach(link => {
+            link.addEventListener('click', () => {
+                menuToggle.classList.remove('active');
+                navOverlay.classList.remove('open');
+                body.classList.remove('menu-open');
+            });
+        });
+
+        // 2. Tracking 子菜单折叠逻辑 (Accordion)
+        function toggleTracking(e) {
+            e.preventDefault(); // 阻止跳转
+            const trackingItem = document.getElementById('trackingItem');
+            const subMenu = document.getElementById('trackingSubMenu');
+            
+            trackingItem.classList.toggle('active-accordion');
+            subMenu.classList.toggle('expanded');
+        }
+
+        // 3. 滚动监听 (Header Frosting)
         window.addEventListener('scroll', () => {
             if (window.scrollY > 50) {
                 document.querySelector('header').classList.add('scrolled');
-                document.body.classList.add('scrolled');
             } else {
                 document.querySelector('header').classList.remove('scrolled');
-                document.body.classList.remove('scrolled');
             }
         });
 
+        // 4. 元素淡入 (Fade In)
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
+                if (entry.isIntersecting) entry.target.classList.add('visible');
             });
         }, { threshold: 0.1 });
 
-        document.querySelectorAll('.banner, .categories-section, .item, footer').forEach(el => {
+        document.querySelectorAll('.banner, .categories-section, .item, footer, .hero-text-area').forEach(el => {
             observer.observe(el);
         });
 
+        // 5. 弹窗逻辑
         window.addEventListener('load', () => {
-            if (!localStorage.getItem('marketingShown_v2')) {
+            if (!localStorage.getItem('marketingShown_v3')) { // v3 key
                 setTimeout(() => {
                     document.getElementById('marketingModal').classList.add('show');
-                    localStorage.setItem('marketingShown_v2', 'true');
+                    localStorage.setItem('marketingShown_v3', 'true');
                 }, 1200);
-
                 setTimeout(() => {
                     document.getElementById('marketingModal').classList.remove('show');
                 }, 8000); 
             }
         });
-
-        document.addEventListener('click', (event) => {
+        document.addEventListener('click', (e) => {
             const modal = document.getElementById('marketingModal');
-            if (modal.classList.contains('show') && !modal.contains(event.target)) {
+            if (modal.classList.contains('show') && !modal.contains(e.target)) {
                 modal.classList.remove('show');
             }
-        });
-
-        const dropdown = document.querySelector('.dropdown');
-        dropdown.addEventListener('mouseenter', () => {
-            dropdown.classList.add('active');
-        });
-        dropdown.addEventListener('mouseleave', () => {
-            dropdown.classList.remove('active');
-        });
-        
-        const dropdownLink = document.querySelector('.dropdown > a');
-        dropdownLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            dropdown.classList.toggle('active');
         });
     </script>
 
     <script>
+        // 安全与防调试
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
           if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) || (e.ctrlKey && ['U', 'S'].includes(e.key.toUpperCase()))) {
             e.preventDefault();
           }
         }, true);
-
         (function() {
-          const config = { checkInterval: 2000, sizeThreshold: 160, redirectUrl: '#' };
+          const config = { checkInterval: 2000, sizeThreshold: 160 };
           setInterval(() => {
             const wdiff = Math.abs(window.outerWidth - window.innerWidth);
             const hdiff = Math.abs(window.outerHeight - window.innerHeight);
-            if (wdiff > config.sizeThreshold || hdiff > config.sizeThreshold) {
-               // console.log('DevTools detected');
-            }
+            // Detection logic kept minimal
           }, config.checkInterval);
         })();
     </script>
