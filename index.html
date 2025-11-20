@@ -42,15 +42,6 @@
       scroll-behavior: smooth;
     }
 
-    /* 通用玻璃拟态类 */
-    .mac-glass {
-      background: var(--glass-bg);
-      backdrop-filter: blur(var(--blur-amt));
-      -webkit-backdrop-filter: blur(var(--blur-amt)); /* Safari 支持 */
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--glass-shadow);
-    }
-
     /* ================= Header ================= */
     header {
       position: fixed;
@@ -76,7 +67,6 @@
       transition: all 0.5s ease;
       opacity: 1;
       max-height: 200px;
-      /* 初始状态不加背景，让它融入页面 */
     }
 
     header.scrolled .brand-header {
@@ -90,7 +80,7 @@
       max-width: 80px;
       height: auto;
       border-radius: 18px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 图标立体感 */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
     .brand-text {
@@ -125,7 +115,7 @@
       position: relative;
     }
 
-    /* 导航链接：macOS 按钮风格 */
+    /* 导航链接 */
     nav a {
       color: var(--text-main);
       text-decoration: none;
@@ -138,11 +128,11 @@
     }
 
     nav a:hover {
-      background: rgba(0, 0, 0, 0.05); /* 类似 macOS 悬停灰色 */
+      background: rgba(0, 0, 0, 0.05);
       transform: scale(1.02);
     }
 
-    /* 下拉菜单：极致玻璃弹窗 */
+    /* 下拉菜单 */
     .submenu {
       display: none;
       position: absolute;
@@ -170,9 +160,7 @@
       display: block;
     }
 
-    .submenu li {
-      width: 100%;
-    }
+    .submenu li { width: 100%; }
 
     .submenu a {
       display: block;
@@ -183,7 +171,7 @@
     }
     
     .submenu a:hover {
-      background: #007aff; /* macOS 蓝色高亮 */
+      background: #007aff;
       color: white;
     }
 
@@ -196,10 +184,10 @@
     }
 
     body.scrolled main {
-      margin-top: 80px; /* 适应收缩后的 Header */
+      margin-top: 80px;
     }
 
-    /* Banner：悬浮玻璃相框 */
+    /* Banner */
     .banner {
       width: 100%;
       height: 360px;
@@ -220,7 +208,6 @@
       transform: scale(1);
     }
 
-    /* 液态反光层 */
     .banner::before {
       content: '';
       position: absolute;
@@ -229,13 +216,26 @@
       pointer-events: none;
     }
 
-    /* Categories Title */
+    /* =========================================
+       Categories Title (文字部分改为液态卡片)
+       =========================================
+    */
     .categories-section {
       text-align: center;
       padding: 40px;
       margin: 0 auto 40px;
       max-width: 800px;
-      /* 这里我们不需要背景，保持干净，突出文字排版 */
+      
+      /* 新增：液态玻璃样式 */
+      background: rgba(255, 255, 255, 0.5); /* 半透明白底 */
+      backdrop-filter: blur(20px);          /* 磨砂模糊 */
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;                  /* 大圆角 */
+      border: 1px solid rgba(255, 255, 255, 0.6); /* 玻璃边缘光泽 */
+      box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.05), 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5); /* 内发光和柔和阴影 */
+
       opacity: 0;
       transform: translateY(20px);
       transition: all 0.8s ease;
@@ -246,26 +246,33 @@
       transform: translateY(0);
     }
 
+    /* 鼠标悬停时微动，增加质感 */
+    .categories-section:hover {
+        background: rgba(255, 255, 255, 0.65);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+    }
+
     .categories-title {
       font-size: 32px;
       font-weight: 700;
       margin-bottom: 16px;
-      background: linear-gradient(135deg, #000 0%, #444 100%);
+      background: linear-gradient(135deg, #000 0%, #333 100%);
       -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent; /* 文字渐变 */
+      -webkit-text-fill-color: transparent;
     }
 
     .categories-text {
       font-size: 17px;
       line-height: 1.6;
-      color: var(--text-secondary);
-      margin: 6px 0;
+      color: #424245; /* 加深颜色以在玻璃背景上更清晰 */
+      margin: 8px 0;
+      font-weight: 400;
     }
 
-    /* ================= Product Grid (液态玻璃卡片核心) ================= */
+    /* ================= Product Grid ================= */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* 响应式自动填充 */
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 30px;
       max-width: 1200px;
       margin: 0 auto 60px;
@@ -274,15 +281,11 @@
     .item {
       position: relative;
       border-radius: 24px;
-      /* 液态玻璃样式 */
       background: rgba(255, 255, 255, 0.4);
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
       border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 
-        0 4px 6px rgba(0, 0, 0, 0.02), 
-        inset 0 0 0 1px rgba(255, 255, 255, 0.5); /* 内发光 */
-      
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
       padding: 15px;
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       opacity: 0;
@@ -291,7 +294,6 @@
       text-decoration: none;
     }
     
-    /* 去除链接下划线 */
     .item a {
         text-decoration: none;
         display: block;
@@ -306,16 +308,14 @@
     .item:hover {
       background: rgba(255, 255, 255, 0.7);
       transform: translateY(-10px) scale(1.02);
-      box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.08),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
     }
 
     .image-frame {
       border-radius: 16px;
       overflow: hidden;
       position: relative;
-      aspect-ratio: 1 / 1; /* 保证正方形图片 */
+      aspect-ratio: 1 / 1;
     }
 
     .item img {
@@ -338,10 +338,6 @@
       font-weight: 600;
       color: var(--text-main);
       letter-spacing: 0.01em;
-    }
-
-    /* 特殊标签样式覆盖原有的绝对定位，改为下方显示，更符合 macOS 卡片设计 */
-    .item .item-label {
       position: static;
       text-shadow: none;
     }
@@ -354,22 +350,17 @@
       padding: 20px;
       text-align: center;
       border-radius: 20px;
-      
-      /* 玻璃拟态 */
       background: rgba(255, 255, 255, 0.5);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.4);
-      
       color: var(--text-secondary);
       font-size: 12px;
       transition: opacity 0.6s ease;
       opacity: 0;
     }
 
-    footer.visible {
-      opacity: 1;
-    }
+    footer.visible { opacity: 1; }
 
     /* ================= Marketing Modal ================= */
     #marketingModal {
@@ -379,16 +370,12 @@
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%) scale(0.9);
-      
-      /* 深度玻璃材质 */
       background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(40px) saturate(180%); /* macOS 经典的高饱和模糊 */
+      backdrop-filter: blur(40px) saturate(180%);
       -webkit-backdrop-filter: blur(40px) saturate(180%);
-      
       border-radius: 24px;
       border: 1px solid rgba(255, 255, 255, 0.5);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      
       padding: 30px;
       width: 90%;
       max-width: 360px;
@@ -429,28 +416,28 @@
         margin-top: 140px;
         padding: 0 15px;
       }
+      
+      /* 移动端文字卡片样式调整 */
+      .categories-section {
+        padding: 25px 15px; /* 稍微减小内边距 */
+        width: 90%; /* 宽度对齐 */
+      }
 
       .grid {
-        grid-template-columns: repeat(2, 1fr); /* 手机端双列 */
+        grid-template-columns: repeat(2, 1fr);
         gap: 15px;
       }
 
-      .item {
-        padding: 10px;
-      }
+      .item { padding: 10px; }
 
-      .categories-title {
-        font-size: 24px;
-      }
+      .categories-title { font-size: 24px; }
 
       .banner {
         height: 220px;
-        background-attachment: scroll; /* 移动端禁用视差以提升性能 */
+        background-attachment: scroll;
       }
       
-      .brand-header img {
-        max-width: 60px;
-      }
+      .brand-header img { max-width: 60px; }
     }
   </style>
 
@@ -465,7 +452,6 @@
       d.getElementsByTagName("head")[0].appendChild(s);
     })();
 
-    // 自动隐藏逻辑
     let idleTimer;
     const idleTime = 5000; 
 
@@ -639,7 +625,6 @@
     </div>
 
     <script>
-        // 滚动监听：控制 Header 和 Body 的状态
         window.addEventListener('scroll', () => {
             if (window.scrollY > 50) {
                 document.querySelector('header').classList.add('scrolled');
@@ -650,7 +635,6 @@
             }
         });
 
-        // 元素淡入动画
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -663,9 +647,8 @@
             observer.observe(el);
         });
 
-        // 弹窗逻辑
         window.addEventListener('load', () => {
-            if (!localStorage.getItem('marketingShown_v2')) { // 更新key以确保用户能再次看到新设计
+            if (!localStorage.getItem('marketingShown_v2')) {
                 setTimeout(() => {
                     document.getElementById('marketingModal').classList.add('show');
                     localStorage.setItem('marketingShown_v2', 'true');
@@ -677,7 +660,6 @@
             }
         });
 
-        // 关闭弹窗
         document.addEventListener('click', (event) => {
             const modal = document.getElementById('marketingModal');
             if (modal.classList.contains('show') && !modal.contains(event.target)) {
@@ -685,7 +667,6 @@
             }
         });
 
-        // 下拉菜单交互优化
         const dropdown = document.querySelector('.dropdown');
         dropdown.addEventListener('mouseenter', () => {
             dropdown.classList.add('active');
@@ -694,7 +675,6 @@
             dropdown.classList.remove('active');
         });
         
-        // 移动端点击兼容
         const dropdownLink = document.querySelector('.dropdown > a');
         dropdownLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -711,15 +691,12 @@
         }, true);
 
         (function() {
-          const config = { checkInterval: 2000, sizeThreshold: 160, redirectUrl: '#' }; // 调低频率避免卡顿
-          let detected = false;
-          
-          // 简化的防调试逻辑，保留核心功能但减少性能开销
+          const config = { checkInterval: 2000, sizeThreshold: 160, redirectUrl: '#' };
           setInterval(() => {
             const wdiff = Math.abs(window.outerWidth - window.innerWidth);
             const hdiff = Math.abs(window.outerHeight - window.innerHeight);
             if (wdiff > config.sizeThreshold || hdiff > config.sizeThreshold) {
-               // console.log('DevTools detected via size');
+               // console.log('DevTools detected');
             }
           }, config.checkInterval);
         })();
