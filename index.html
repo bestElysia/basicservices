@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Product — Deyingluxury</title>
+  <meta name="description" content="Share your product about DeyingLuxury — 1:1 Mirror Copy." />
+  
+  <meta property="og:title" content="DeyingLuxury — Product" />
+  <meta property="og:description" content="Share your product about DeyingLuxury — 1:1 Mirror Copy." />
+  <meta property="og:image" content="https://deyingluxury.com/assets/luxuryshare.png" />
+  <meta property="og:url" content="https://deyingluxury.com/product" />
+  <meta property="og:type" content="website" />
+  
+  <link rel="icon" href="assets/luxurynetwork.png" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/luxurynetwork.png" />
+
+  <style>
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.8);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+      --text-main: #1d1d1f;
+      --text-secondary: #86868b;
+      --blur-amt: 20px;
+    }
+
+    /* 基础设置：macOS 字体栈 */
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%); /* 轻微渐变以突显玻璃效果 */
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* 通用玻璃拟态类 */
+    .mac-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur-amt));
+      -webkit-backdrop-filter: blur(var(--blur-amt)); /* Safari 支持 */
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* ================= Header ================= */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 滚动时 Header 变为磨砂条 */
+    header.scrolled {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .brand-header {
+      text-align: center;
+      padding: 20px 0;
+      transition: all 0.5s ease;
+      opacity: 1;
+      max-height: 200px;
+      /* 初始状态不加背景，让它融入页面 */
+    }
+
+    header.scrolled .brand-header {
+      opacity: 0;
+      max-height: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .brand-header img {
+      max-width: 80px;
+      height: auto;
+      border-radius: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 图标立体感 */
+    }
+
+    .brand-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* ================= Navigation ================= */
+    nav {
+      padding: 15px 0;
+      transition: padding 0.3s;
+    }
+    
+    header.scrolled nav {
+      padding: 12px 0;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      margin: 0;
+      padding: 0;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    nav li {
+      position: relative;
+    }
+
+    /* 导航链接：macOS 按钮风格 */
+    nav a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-block;
+    }
+
+    nav a:hover {
+      background: rgba(0, 0, 0, 0.05); /* 类似 macOS 悬停灰色 */
+      transform: scale(1.02);
+    }
+
+    /* 下拉菜单：极致玻璃弹窗 */
+    .submenu {
+      display: none;
+      position: absolute;
+      top: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-radius: 14px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      padding: 6px;
+      min-width: 140px;
+      z-index: 1001;
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: translateX(-50%) scale(0.9); }
+      to { opacity: 1; transform: translateX(-50%) scale(1); }
+    }
+
+    .dropdown.active .submenu {
+      display: block;
+    }
+
+    .submenu li {
+      width: 100%;
+    }
+
+    .submenu a {
+      display: block;
+      text-align: center;
+      font-size: 13px;
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+    
+    .submenu a:hover {
+      background: #007aff; /* macOS 蓝色高亮 */
+      color: white;
+    }
+
+    /* ================= Main Content ================= */
+    main {
+      flex: 1;
+      margin-top: 160px;
+      padding: 0 20px;
+      transition: margin-top 0.5s ease;
+    }
+
+    body.scrolled main {
+      margin-top: 80px; /* 适应收缩后的 Header */
+    }
+
+    /* Banner：悬浮玻璃相框 */
+    .banner {
+      width: 100%;
+      height: 360px;
+      background: url('assets/luxurybanner.jpg') no-repeat center center/cover;
+      background-attachment: fixed;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.98);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .banner.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* 液态反光层 */
+    .banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+      pointer-events: none;
+    }
+
+    /* Categories Title */
+    .categories-section {
+      text-align: center;
+      padding: 40px;
+      margin: 0 auto 40px;
+      max-width: 800px;
+      /* 这里我们不需要背景，保持干净，突出文字排版 */
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.8s ease;
+    }
+
+    .categories-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .categories-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #000 0%, #444 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; /* 文字渐变 */
+    }
+
+    .categories-text {
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin: 6px 0;
+    }
+
+    /* ================= Product Grid (液态玻璃卡片核心) ================= */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* 响应式自动填充 */
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto 60px;
+    }
+
+    .item {
+      position: relative;
+      border-radius: 24px;
+      /* 液态玻璃样式 */
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 
+        0 4px 6px rgba(0, 0, 0, 0.02), 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5); /* 内发光 */
+      
+      padding: 15px;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      transform: translateY(40px);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    
+    /* 去除链接下划线 */
+    .item a {
+        text-decoration: none;
+        display: block;
+        height: 100%;
+    }
+
+    .item.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .item:hover {
+      background: rgba(255, 255, 255, 0.7);
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.08),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+
+    .image-frame {
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 1 / 1; /* 保证正方形图片 */
+    }
+
+    .item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      display: block;
+    }
+
+    .item:hover img {
+      transform: scale(1.12);
+    }
+
+    .item-label {
+      display: block;
+      margin-top: 15px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: 0.01em;
+    }
+
+    /* 特殊标签样式覆盖原有的绝对定位，改为下方显示，更符合 macOS 卡片设计 */
+    .item .item-label {
+      position: static;
+      text-shadow: none;
+    }
+
+    /* ================= Footer ================= */
+    footer {
+      margin: 40px auto;
+      width: 90%;
+      max-width: 800px;
+      padding: 20px;
+      text-align: center;
+      border-radius: 20px;
+      
+      /* 玻璃拟态 */
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      
+      color: var(--text-secondary);
+      font-size: 12px;
+      transition: opacity 0.6s ease;
+      opacity: 0;
+    }
+
+    footer.visible {
+      opacity: 1;
+    }
+
+    /* ================= Marketing Modal ================= */
+    #marketingModal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      
+      /* 深度玻璃材质 */
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(40px) saturate(180%); /* macOS 经典的高饱和模糊 */
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      
+      padding: 30px;
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    #marketingModal.show {
+      display: block;
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #marketingModal img {
+      width: 100%;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+
+    #marketingModal h2 {
+      font-size: 22px;
+      margin: 0 0 10px 0;
+      color: var(--text-main);
+    }
+
+    #marketingModal p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    /* ================= Mobile Optimization ================= */
+    @media (max-width: 768px) {
+      main {
+        margin-top: 140px;
+        padding: 0 15px;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, 1fr); /* 手机端双列 */
+        gap: 15px;
+      }
+
+      .item {
+        padding: 10px;
+      }
+
+      .categories-title {
+        font-size: 24px;
+      }
+
+      .banner {
+        height: 220px;
+        background-attachment: scroll; /* 移动端禁用视差以提升性能 */
+      }
+      
+      .brand-header img {
+        max-width: 60px;
+      }
+    }
+  </style>
+
+  <script type="text/javascript">
+    window.$crisp = [];
+    window.CRISP_WEBSITE_ID = "bab3c6cf-4471-41fd-8fda-e0fdfa4aa01c";
+    (function() {
+      var d = document;
+      var s = d.createElement("script");
+      s.src = "https://client.crisp.chat/l.js";
+      s.async = 1;
+      d.getElementsByTagName("head")[0].appendChild(s);
+    })();
+
+    // 自动隐藏逻辑
+    let idleTimer;
+    const idleTime = 5000; 
+
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      showCrisp();
+      idleTimer = setTimeout(hideCrisp, idleTime);
+    }
+
+    function hideCrisp() {
+      if (window.$crisp) { window.$crisp.push(["do", "chat:hide"]); }
+    }
+
+    function showCrisp() {
+      if (window.$crisp) { window.$crisp.push(["do", "chat:show"]); }
+    }
+
+    ["scroll", "mousemove", "keydown", "click", "touchstart"].forEach(evt => {
+      document.addEventListener(evt, resetIdleTimer, { passive: true });
+    });
+    window.addEventListener("load", resetIdleTimer);
+  </script>
+</head>
+<body>
+
+    <header>
+        <div class="brand-header">
+            <img src="assets/brand.jpg" alt="DeyingLuxury">
+            <p class="brand-text">2025 Fall - Winter Collection</p>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Product</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="luxury.html">Official</a></li>
+                <li class="dropdown">
+                    <a href="#" onclick="return false;">Tracking ▾</a>
+                    <ul class="submenu">
+                        <li><a href="https://www.17track.net/en" target="_blank">17TRACK</a></li>
+                        <li><a href="https://www.fedex.com/en-us/home.html" target="_blank">FedEx</a></li>
+                        <li><a href="https://www.dhl.com/fr-fr/home.html" target="_blank">DHL</a></li>
+                        <li><a href="https://www.aramex.com/sa/en" target="_blank">Aramex</a></li>
+                        <li><a href="https://www.ups.com/track?loc=en_US&requester=ST/" target="_blank">UPS</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="banner"></div>
+
+        <div class="categories-section">
+            <h2 class="categories-title">Curated Selection</h2>
+            <p class="categories-text">Exploring the essence of 1:1 Mirror Copy craftsmanship.</p>
+            <p class="categories-text">Customization services available upon request.</p>
+        </div>
+
+        <div class="grid">
+            <div class="item">
+                <a href="https://mbags.qiqiyg.com/defaulten.html" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/womenbag.jpg" alt="Women's Bag">
+                    </div>
+                    <span class="item-label">Women's Bag</span>
+                </a>
+            </div>
+            <div class="item">
+                <a href="https://ss8899.x.yupoo.com/" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/womenshoes.jpg" alt="Women's Shoes">
+                    </div>
+                    <span class="item-label">Women's Shoes</span>
+                </a>
+            </div>
+            <div class="item">
+                <a href="https://alina-fashion-store2.x.yupoo.com/" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/womenclothing.jpg" alt="Women's Clothing">
+                    </div>
+                    <span class="item-label">Women's Wear</span>
+                </a>
+            </div>
+            <div class="item">
+                <a href="https://a202007051508096050207630.szwego.com/weshop/search/A202007051508096050207630?filterText=shoes" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/menshoes.jpg" alt="Men's Shoes">
+                    </div>
+                    <span class="item-label">Men's Shoes</span>
+                </a>
+            </div>
+            <div class="item">
+                <a href="https://407131796.x.yupoo.com/albums" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/menclothing1.jpg" alt="Men's Clothing">
+                    </div>
+                    <span class="item-label">Men's Wear I</span>
+                </a>
+            </div>
+            <div class="item">
+                <a href="https://cpdk8888.x.yupoo.com/albums?tab=gallery" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/menclothing2.jpg" alt="Men's Clothing">
+                    </div>
+                    <span class="item-label">Men's Wear II</span>
+                </a>
+            </div>
+            <div class="item">
+                <a href="https://a202007051508096050207630.szwego.com/weshop/search/A202007051508096050207630?filterText=watch" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/watches.jpg" alt="Watches">
+                    </div>
+                    <span class="item-label">Timepieces</span>
+                </a>
+            </div>
+             <div class="item">
+                <a href="https://351164.x.yupoo.com/albums" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/jewelry.jpg" alt="Jewelry">
+                    </div>
+                    <span class="item-label">Jewelry</span>
+                </a>
+            </div>
+             <div class="item">
+                <a href="https://a2017121901110006604.szwego.com/static/index.html?t=1735034741602#/goods_list/A2017121901110006604?tagId=23105351" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/caps.jpg" alt="Caps">
+                    </div>
+                    <span class="item-label">Headwear</span>
+                </a>
+            </div>
+             <div class="item">
+                <a href="https://shijuemaoyi888.x.yupoo.com/albums" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/belts.jpg" alt="Belts">
+                    </div>
+                    <span class="item-label">Belts</span>
+                </a>
+            </div>
+            <div class="item">
+                <a href="https://weinifuwu14.x.yupoo.com/albums?tab=gallery" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/sunglasses.jpg" alt="Sunglasses">
+                    </div>
+                    <span class="item-label">Eyewear</span>
+                </a>
+            </div>
+             <div class="item">
+                <a href="https://xiaobei12.x.yupoo.com/contact" target="_blank">
+                    <div class="image-frame">
+                        <img src="assets/menshoes.jpg" alt="Men's bag">
+                    </div>
+                    <span class="item-label">Men's Bags</span>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2025 DEYINGLUXURY. All Rights Reserved. <br>
+        <span style="font-size: 10px; opacity: 0.6;">Beijing ICP No. 11001839-1</span>
+    </footer>
+
+    <div id="marketingModal">
+        <img src="assets/chris.jpg" alt="Christmas Gift">
+        <h2>🎁 Season's Greetings</h2>
+        <p>2025 Early Winter Arrivals. Enjoy free shipping on orders over $500.</p>
+        <p style="font-weight: 600; color: #007aff;">Order now for a free gift!</p>
+    </div>
+
+    <script>
+        // 滚动监听：控制 Header 和 Body 的状态
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                document.querySelector('header').classList.add('scrolled');
+                document.body.classList.add('scrolled');
+            } else {
+                document.querySelector('header').classList.remove('scrolled');
+                document.body.classList.remove('scrolled');
+            }
+        });
+
+        // 元素淡入动画
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.banner, .categories-section, .item, footer').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 弹窗逻辑
+        window.addEventListener('load', () => {
+            if (!localStorage.getItem('marketingShown_v2')) { // 更新key以确保用户能再次看到新设计
+                setTimeout(() => {
+                    document.getElementById('marketingModal').classList.add('show');
+                    localStorage.setItem('marketingShown_v2', 'true');
+                }, 1200);
+
+                setTimeout(() => {
+                    document.getElementById('marketingModal').classList.remove('show');
+                }, 8000); 
+            }
+        });
+
+        // 关闭弹窗
+        document.addEventListener('click', (event) => {
+            const modal = document.getElementById('marketingModal');
+            if (modal.classList.contains('show') && !modal.contains(event.target)) {
+                modal.classList.remove('show');
+            }
+        });
+
+        // 下拉菜单交互优化
+        const dropdown = document.querySelector('.dropdown');
+        dropdown.addEventListener('mouseenter', () => {
+            dropdown.classList.add('active');
+        });
+        dropdown.addEventListener('mouseleave', () => {
+            dropdown.classList.remove('active');
+        });
+        
+        // 移动端点击兼容
+        const dropdownLink = document.querySelector('.dropdown > a');
+        dropdownLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            dropdown.classList.toggle('active');
+        });
+    </script>
+
+    <script>
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) || (e.ctrlKey && ['U', 'S'].includes(e.key.toUpperCase()))) {
+            e.preventDefault();
+          }
+        }, true);
+
+        (function() {
+          const config = { checkInterval: 2000, sizeThreshold: 160, redirectUrl: '#' }; // 调低频率避免卡顿
+          let detected = false;
+          
+          // 简化的防调试逻辑，保留核心功能但减少性能开销
+          setInterval(() => {
+            const wdiff = Math.abs(window.outerWidth - window.innerWidth);
+            const hdiff = Math.abs(window.outerHeight - window.innerHeight);
+            if (wdiff > config.sizeThreshold || hdiff > config.sizeThreshold) {
+               // console.log('DevTools detected via size');
+            }
+          }, config.checkInterval);
+        })();
+    </script>
+</body>
+</html>
