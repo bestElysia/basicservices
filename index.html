@@ -4,349 +4,337 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Product — Deyingluxury</title>
-  <meta name="description" content="Share your product about DeyingLuxury — 1:1 Mirror Copy." />
-  
-  <meta property="og:title" content="DeyingLuxury — Product" />
-  <meta property="og:description" content="Share your product about DeyingLuxury — 1:1 Mirror Copy." />
-  <meta property="og:image" content="https://deyingluxury.com/assets/luxuryshare.png" />
-  <meta property="og:url" content="https://deyingluxury.com/product" />
-  <meta property="og:type" content="website" />
   
   <link rel="icon" href="assets/luxurynetwork.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/luxurynetwork.png" />
 
   <style>
     :root {
-      --glass-bg: rgba(255, 255, 255, 0.65);
-      --glass-border: rgba(255, 255, 255, 0.5);
-      --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-      --text-main: #1d1d1f;
-      --text-secondary: #86868b;
-      --accent-blue: #007aff;
-      --anim-spring: cubic-bezier(0.25, 0.8, 0.25, 1); /* 柔和的弹簧 */
+      /* iOS 26 风格变量 */
+      --glass-surface: rgba(255, 255, 255, 0.45); /* 更通透的表面 */
+      --glass-border: rgba(255, 255, 255, 0.6);
+      --glass-highlight: rgba(255, 255, 255, 0.8);
+      --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+      --text-main: #000000;
+      --text-secondary: rgba(0, 0, 0, 0.6);
+      --accent-ios: #007aff;
+      /* 极度平滑的高回弹弹簧动画 */
+      --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); 
+      --spring-smooth: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* 基础重置 */
+    /* ================= 动态流体背景 ================= */
     body {
-      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
       color: var(--text-main);
       -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
       overflow-x: hidden;
+      
+      /* 动态渐变背景 */
+      background: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                  radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                  radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+      background-color: #f0f2f5; /* 浅色底兜底 */
+      /* 覆盖一层流动的 Mesh Gradient */
+      background-image: 
+        radial-gradient(at 80% 0%, hsla(189,100%,56%,0.3) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, hsla(340,100%,76%,0.3) 0px, transparent 50%),
+        radial-gradient(at 80% 50%, hsla(250,100%,76%,0.3) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, hsla(22,100%,77%,0.3) 0px, transparent 50%),
+        radial-gradient(at 80% 100%, hsla(240,100%,70%,0.3) 0px, transparent 50%),
+        radial-gradient(at 0% 0%, hsla(340,100%,76%,0.3) 0px, transparent 50%);
+      background-attachment: fixed; /* 让背景固定，玻璃移动时产生视差 */
     }
 
-    html { scroll-behavior: smooth; }
+    /* 通用液态玻璃类 (Liquid Glass) */
+    .liquid-glass {
+      background: var(--glass-surface);
+      /* 核心：极高的模糊 + 饱和度提升，制造通透感 */
+      backdrop-filter: blur(40px) saturate(180%); 
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      
+      /* 核心：多重边框模拟厚度与反光 */
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.4), /* 内边缘高光 */
+        0 20px 40px rgba(0, 0, 0, 0.1);           /* 柔和投影 */
+      border-radius: 30px; /* 更大的圆角，iOS 风格 */
+    }
 
-    /* ================= 1. 汉堡按钮 (左上角悬浮) ================= */
+    /* ================= 1. 悬浮汉堡按钮 (水滴形态) ================= */
     .hamburger {
       position: fixed;
-      top: 20px;
-      left: 20px;
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      /* 液态玻璃质感 */
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      top: 24px;
+      left: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 20px; /* Squircle */
       
+      /* 继承液态玻璃 */
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(25px) saturate(200%);
+      -webkit-backdrop-filter: blur(25px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.9);
+
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       cursor: pointer;
-      z-index: 2000; /* 保证在最上层 */
-      transition: transform 0.3s var(--anim-spring), background 0.3s;
+      z-index: 2000;
+      transition: transform 0.4s var(--spring-bounce), background 0.3s;
     }
 
     .hamburger:hover {
-      transform: scale(1.05);
-      background: rgba(255, 255, 255, 0.85);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+      transform: scale(1.1); /* 悬停放大 */
+      background: rgba(255, 255, 255, 0.8);
     }
 
-    /* 汉堡条样式 */
+    .hamburger:active {
+      transform: scale(0.95); /* 点击回缩 */
+    }
+
     .hamburger .bar {
-      width: 24px;
-      height: 2px;
+      width: 22px;
+      height: 2.5px;
       background-color: #1d1d1f;
-      border-radius: 2px;
-      transition: all 0.4s var(--anim-spring);
+      border-radius: 10px;
+      transition: all 0.4s var(--spring-bounce);
       position: relative;
     }
 
-    /* 按钮变为 X 的动画 */
-    .hamburger.active .bar:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    /* X 变换动画 */
+    .hamburger.active .bar:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
     .hamburger.active .bar:nth-child(2) { opacity: 0; transform: translateX(10px); }
-    .hamburger.active .bar:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    .hamburger.active .bar:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
 
-    /* ================= 2. 侧边导航栏 (Side Nav) ================= */
+    /* ================= 2. 侧边悬浮面板 (HUD 风格) ================= */
     .side-nav {
       position: fixed;
-      top: 85px; /* 位于汉堡按钮下方 */
-      left: 20px;
-      width: 240px;
+      top: 90px;
+      left: 24px;
+      width: 260px;
       
-      /* 液态玻璃面板样式 */
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(30px) saturate(180%);
-      -webkit-backdrop-filter: blur(30px) saturate(180%);
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-      
-      padding: 15px;
+      /* 液态玻璃面板 */
+      background: rgba(240, 240, 250, 0.65); /* 略带蓝白调 */
+      backdrop-filter: blur(50px) saturate(200%);
+      -webkit-backdrop-filter: blur(50px) saturate(200%);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 
+        0 30px 60px rgba(0, 0, 0, 0.12),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       z-index: 1999;
       
-      /* 初始隐藏状态：向下偏移 + 透明 + 缩小 */
       opacity: 0;
-      pointer-events: none;
-      transform: translateY(-20px) scale(0.95);
+      visibility: hidden;
+      transform: translateX(-30px) scale(0.9) rotateY(10deg); /* 3D 入场效果 */
       transform-origin: top left;
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); /* macOS 动效 */
+      transition: all 0.6s var(--spring-bounce);
     }
 
-    /* 激活状态 */
     .side-nav.open {
       opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0) scale(1);
+      visibility: visible;
+      transform: translateX(0) scale(1) rotateY(0);
     }
 
-    /* 导航链接样式 */
     .nav-item {
       display: flex;
       align-items: center;
-      padding: 12px 16px;
+      padding: 14px 18px;
       color: var(--text-main);
       text-decoration: none;
-      font-weight: 500;
-      font-size: 15px;
-      border-radius: 14px;
-      transition: all 0.2s ease;
-      background: rgba(255, 255, 255, 0);
+      font-weight: 600;
+      font-size: 16px;
+      border-radius: 18px;
+      transition: all 0.3s var(--spring-smooth);
+      position: relative;
+      overflow: hidden;
     }
 
+    /* 悬停时的光效 */
     .nav-item:hover {
-      background: rgba(255, 255, 255, 0.6);
-      transform: translateX(4px); /* 轻微右移 */
-      color: #000;
+      background: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transform: scale(1.02);
     }
 
-    /* Tracking 子菜单 (手风琴) */
+    /* Tracking 子菜单 */
     .sub-nav {
       display: none;
-      margin-left: 10px;
-      margin-top: 2px;
-      padding-left: 10px;
-      border-left: 2px solid rgba(0, 0, 0, 0.05);
+      margin: 5px 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.03); /* 稍微深一点的凹槽感 */
+      border-radius: 18px;
     }
     
     .sub-nav a {
       display: block;
-      padding: 8px 12px;
-      font-size: 13px;
+      padding: 10px 14px;
+      font-size: 14px;
       color: var(--text-secondary);
       text-decoration: none;
-      border-radius: 8px;
+      border-radius: 12px;
       transition: all 0.2s;
     }
-
     .sub-nav a:hover {
-      color: var(--accent-blue);
-      background: rgba(255,255,255,0.5);
-      transform: translateX(4px);
+      background: #fff;
+      color: var(--accent-ios);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
-    /* 切换图标 */
-    .toggle-icon {
-        margin-left: auto;
-        font-size: 12px;
-        transition: transform 0.3s;
-    }
-    .nav-item.active-toggle .toggle-icon {
-        transform: rotate(180deg);
-    }
+    .toggle-icon { margin-left: auto; font-size: 12px; transition: transform 0.4s var(--spring-bounce); opacity: 0.5; }
+    .nav-item.active-toggle .toggle-icon { transform: rotate(180deg); opacity: 1; }
 
-    /* ================= 3. 主要内容布局 ================= */
+    /* ================= 3. 主要内容区 ================= */
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 40px 20px;
       width: 100%;
       box-sizing: border-box;
-      /* 因为去掉了Header，顶部留白 */
-      padding-top: 40px; 
     }
 
-    /* 顶部 Hero 区域 (替代原Header里的Logo) */
     .hero-header {
       text-align: center;
-      margin-bottom: 40px;
-      padding-top: 20px; /* 给移动端留空间 */
+      margin-bottom: 50px;
+      padding-top: 40px;
     }
     
     .hero-header img {
-        width: 80px;
-        height: 80px;
-        border-radius: 20px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        margin-bottom: 15px;
-        transition: transform 0.5s var(--anim-spring);
+        width: 90px;
+        height: 90px;
+        border-radius: 24px; /* iOS Squircle */
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        margin-bottom: 20px;
+        animation: float 6s ease-in-out infinite;
     }
     
+    /* 浮动动画 */
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
     .hero-header h1 {
-        font-size: 24px;
-        margin: 0;
-        background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(180deg, #000 0%, #555 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
     }
 
-    /* Banner (保持原有液态风格) */
+    /* 统一卡片样式 (继承 liquid-glass) */
+    .banner, .categories-section, .item {
+      position: relative;
+      border-radius: 32px; /* 超大圆角 */
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(40px) saturate(160%);
+      -webkit-backdrop-filter: blur(40px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.05),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.4); /* 内发光 */
+      transition: all 0.5s var(--spring-bounce);
+      opacity: 0; 
+      transform: translateY(30px) scale(0.95);
+    }
+    
+    .visible { opacity: 1; transform: translateY(0) scale(1); }
+
+    /* Banner 特有 */
     .banner {
-      width: 100%;
-      height: 360px;
+      height: 380px;
       background: url('assets/luxurybanner.jpg') no-repeat center center/cover;
       background-attachment: fixed;
-      border-radius: 24px;
-      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
-      margin-bottom: 40px;
-      position: relative;
+      margin-bottom: 50px;
       overflow: hidden;
-      opacity: 0;
-      transform: scale(0.98);
-      transition: all 0.8s var(--anim-spring);
     }
-    .banner.visible { opacity: 1; transform: scale(1); }
+    
+    /* 悬停效果：卡片上浮 + 变亮 */
+    .item:hover, .banner:hover, .categories-section:hover {
+      transform: translateY(-10px) scale(1.02);
+      background: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
+      border-color: rgba(255, 255, 255, 0.8);
+    }
 
-    /* Categories Text (玻璃卡片) */
     .categories-section {
       text-align: center;
-      padding: 40px;
-      margin: 0 auto 40px;
+      padding: 50px;
+      margin: 0 auto 50px;
       max-width: 800px;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-      opacity: 0; transform: translateY(20px);
-      transition: all 0.8s ease;
     }
-    .categories-section.visible { opacity: 1; transform: translateY(0); }
-    .categories-title { font-size: 28px; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
-    .categories-text { font-size: 16px; color: var(--text-secondary); margin: 5px 0; }
+    .categories-title { font-size: 32px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.8px;}
+    .categories-text { font-size: 18px; color: var(--text-secondary); line-height: 1.5; }
 
-    /* Product Grid (网格) */
+    /* Grid */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 30px;
-      margin-bottom: 60px;
+      margin-bottom: 80px;
     }
-    .item {
-      position: relative; border-radius: 24px;
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-      padding: 15px;
-      transition: all 0.4s var(--anim-spring);
-      opacity: 0; transform: translateY(40px);
-      cursor: pointer;
-    }
+    
+    .item { padding: 16px; cursor: pointer; }
     .item a { text-decoration: none; display: block; }
-    .item.visible { opacity: 1; transform: translateY(0); }
-    .item:hover {
-      background: rgba(255, 255, 255, 0.7);
-      transform: translateY(-8px) scale(1.02);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    
+    .image-frame { 
+        border-radius: 24px; 
+        overflow: hidden; 
+        aspect-ratio: 1 / 1; 
+        background: rgba(0,0,0,0.03);
     }
-    .image-frame { border-radius: 16px; overflow: hidden; aspect-ratio: 1 / 1; }
-    .item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s; display: block; }
-    .item:hover img { transform: scale(1.1); }
-    .item-label { display: block; margin-top: 15px; text-align: center; font-weight: 600; color: var(--text-main); }
+    .item img { 
+        width: 100%; height: 100%; object-fit: cover; 
+        transition: transform 0.6s var(--spring-smooth); 
+    }
+    .item:hover img { transform: scale(1.12); }
+    
+    .item-label { 
+        display: block; margin-top: 16px; text-align: center; 
+        font-weight: 600; font-size: 17px; color: var(--text-main); 
+    }
 
     /* Footer */
     footer {
-      text-align: center; padding: 30px;
-      color: var(--text-secondary); font-size: 12px;
-      background: rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid rgba(255,255,255,0.5);
+      text-align: center; padding: 40px;
+      color: var(--text-secondary); font-size: 13px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.3);
       margin-top: auto;
     }
 
-    /* Marketing Modal */
-    #marketingModal {
-      display: none; position: fixed; z-index: 3000; left: 50%; top: 50%;
-      transform: translate(-50%, -50%) scale(0.9);
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(40px) saturate(180%);
-      border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.25);
-      padding: 30px; width: 90%; max-width: 360px; text-align: center;
-      opacity: 0; transition: all 0.5s var(--anim-spring);
-    }
-    #marketingModal.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    #marketingModal img { width: 100%; border-radius: 16px; margin-bottom: 20px; }
-    #marketingModal h2 { font-size: 20px; margin-bottom: 10px; color: var(--text-main); }
-    #marketingModal p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
-
-    /* ================= 4. 移动端优化 (iOS style) ================= */
+    /* ================= 移动端适配 (iOS 通知中心风格) ================= */
     @media (max-width: 768px) {
-      /* 移动端：菜单宽度调整，类似通知弹窗 */
       .side-nav {
+        top: 85px;
+        left: 20px; 
+        right: 20px; /* 撑满宽度，留边距 */
         width: auto;
-        right: 20px; /* 左右留白，不再是固定宽度 */
-        left: 20px;
-        top: 80px;
+        border-radius: 24px;
       }
       
-      /* 移动端 Grid 双列 */
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-      }
-      
-      .container { padding-top: 20px; }
-      .banner { height: 220px; background-attachment: scroll; }
-      .hamburger { width: 48px; height: 48px; }
-      
-      /* 避免内容被悬浮菜单挡住 */
-      .hero-header { margin-top: 40px; } 
+      .hero-header { padding-top: 60px; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+      .banner { height: 240px; background-attachment: scroll; }
+      .hamburger { width: 50px; height: 50px; left: 20px; top: 20px; }
     }
   </style>
 
-  <script type="text/javascript">
-    window.$crisp = [];
-    window.CRISP_WEBSITE_ID = "bab3c6cf-4471-41fd-8fda-e0fdfa4aa01c";
-    (function() {
-      var d = document; var s = d.createElement("script");
-      s.src = "https://client.crisp.chat/l.js"; s.async = 1;
-      d.getElementsByTagName("head")[0].appendChild(s);
-    })();
-    
-    // Auto hide logic
-    let idleTimer; const idleTime = 30000;
-    function resetIdleTimer() { clearTimeout(idleTimer); showCrisp(); idleTimer = setTimeout(hideCrisp, idleTime); }
-    function hideCrisp() { if (window.$crisp) window.$crisp.push(["do", "chat:hide"]); }
-    function showCrisp() { if (window.$crisp) window.$crisp.push(["do", "chat:show"]); }
-    ["scroll", "click", "touchstart"].forEach(evt => document.addEventListener(evt, resetIdleTimer, {passive:true}));
-    window.addEventListener("load", resetIdleTimer);
-  </script>
 </head>
 <body>
 
@@ -469,61 +457,63 @@
         <span style="opacity:0.6">Beijing ICP No. 11001839-1</span>
     </footer>
 
-    <div id="marketingModal">
-        <img src="assets/chris.jpg" alt="Gift">
+    <div id="marketingModal" class="item"> <img src="assets/chris.jpg" alt="Gift">
         <h2>🎁 Season's Greetings</h2>
         <p>2025 Early Winter Arrivals. Enjoy free shipping on orders over $500.</p>
     </div>
+    <style>
+        #marketingModal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+            z-index: 3000; width: 90%; max-width: 340px; text-align: center; display: none;
+            background: rgba(255, 255, 255, 0.85); padding: 25px;
+        }
+        #marketingModal.show { display: block; animation: popIn 0.5s var(--spring-bounce) forwards; }
+        @keyframes popIn {
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        #marketingModal img { width: 100%; border-radius: 16px; margin-bottom: 15px; }
+    </style>
 
     <script>
-        // 1. 菜单逻辑
+        // 1. 菜单交互
         const hamburger = document.getElementById('hamburger');
         const sideNav = document.getElementById('sideNav');
-        let isMenuOpen = false;
+        let menuOpen = false;
 
-        // 切换菜单
         hamburger.addEventListener('click', (e) => {
-            e.stopPropagation(); // 防止冒泡
-            isMenuOpen = !isMenuOpen;
+            e.stopPropagation();
+            menuOpen = !menuOpen;
             hamburger.classList.toggle('active');
             sideNav.classList.toggle('open');
         });
 
-        // 点击外部关闭菜单
         document.addEventListener('click', (e) => {
-            if (isMenuOpen && !sideNav.contains(e.target) && !hamburger.contains(e.target)) {
-                isMenuOpen = false;
+            if (menuOpen && !sideNav.contains(e.target) && !hamburger.contains(e.target)) {
+                menuOpen = false;
                 hamburger.classList.remove('active');
                 sideNav.classList.remove('open');
             }
         });
 
-        // 2. Tracking 折叠逻辑
+        // 2. Tracking 菜单折叠
         const trackingToggle = document.getElementById('trackingToggle');
         const trackingSubMenu = document.getElementById('trackingSubMenu');
         trackingToggle.addEventListener('click', () => {
             trackingToggle.classList.toggle('active-toggle');
-            if (trackingSubMenu.style.display === 'block') {
-                trackingSubMenu.style.display = 'none';
-            } else {
-                trackingSubMenu.style.display = 'block';
-            }
+            trackingSubMenu.style.display = trackingSubMenu.style.display === 'block' ? 'none' : 'block';
         });
 
-        // 3. 淡入动画 (Intersection Observer)
+        // 3. 淡入动画
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
+                if (entry.isIntersecting) entry.target.classList.add('visible');
             });
         }, { threshold: 0.1 });
-
         document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
         // 4. 弹窗逻辑
         window.addEventListener('load', () => {
-            const key = 'marketingShown_v4'; // 更新版本
+            const key = 'marketingShown_ios26';
             if (!localStorage.getItem(key)) {
                 setTimeout(() => {
                     document.getElementById('marketingModal').classList.add('show');
@@ -531,25 +521,18 @@
                 }, 1000);
                 setTimeout(() => {
                     document.getElementById('marketingModal').classList.remove('show');
-                }, 8000);
+                }, 7000);
             }
         });
-        // 点击弹窗外关闭
         document.addEventListener('click', (e) => {
-            const modal = document.getElementById('marketingModal');
-            if (modal.classList.contains('show') && !modal.contains(e.target)) {
-                modal.classList.remove('show');
-            }
+             const modal = document.getElementById('marketingModal');
+             if(modal.classList.contains('show') && !modal.contains(e.target)) modal.classList.remove('show');
         });
-    </script>
 
-    <script>
         // 防调试
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
-          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) || (e.ctrlKey && ['U', 'S'].includes(e.key.toUpperCase()))) {
-            e.preventDefault();
-          }
+          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) || (e.ctrlKey && ['U', 'S'].includes(e.key.toUpperCase()))) e.preventDefault();
         }, true);
     </script>
 </body>
