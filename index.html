@@ -18,15 +18,15 @@
   <style>
     :root {
       --glass-bg: rgba(255, 255, 255, 0.65);
-      --glass-border: rgba(255, 255, 255, 0.8);
-      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
       --text-main: #1d1d1f;
       --text-secondary: #86868b;
       --accent-blue: #007aff;
-      --blur-amt: 25px;
-      --anim-spring: cubic-bezier(0.19, 1, 0.22, 1); /* macOS 风格弹簧动画 */
+      --anim-spring: cubic-bezier(0.25, 0.8, 0.25, 1); /* 柔和的弹簧 */
     }
 
+    /* 基础重置 */
     body {
       background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
@@ -37,279 +37,184 @@
       min-height: 100vh;
       color: var(--text-main);
       -webkit-font-smoothing: antialiased;
-      overflow-x: hidden; /* 防止水平滚动 */
-    }
-    
-    /* 当菜单打开时禁止滚动 */
-    body.menu-open {
-        overflow: hidden;
+      overflow-x: hidden;
     }
 
-    html {
-      scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
 
-    /* ================= Header (重构版) ================= */
-    header {
+    /* ================= 1. 汉堡按钮 (左上角悬浮) ================= */
+    .hamburger {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 80px; /* 固定高度 */
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 5%;
-      box-sizing: border-box;
-      transition: all 0.5s var(--anim-spring);
-    }
-
-    header.scrolled {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      height: 60px; /* 滚动收缩 */
-      border-bottom: 1px solid rgba(255,255,255,0.5);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-    }
-
-    /* 品牌区域 */
-    .brand-container {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 2001; /* 确保在菜单层之上 */
-    }
-
-    .brand-container img {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      transition: width 0.5s var(--anim-spring);
-    }
-
-    .brand-text-small {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-main);
-        opacity: 0;
-        transform: translateX(-10px);
-        transition: all 0.5s var(--anim-spring);
-        display: none; /* 默认隐藏，滚动或移动端显示简单标题 */
-    }
-
-    header.scrolled .brand-container img {
-        width: 32px;
-        height: 32px;
-    }
-    
-    header.scrolled .brand-text-small {
-        opacity: 1;
-        transform: translateX(0);
-        display: block;
-    }
-
-    /* ================= Hamburger Button (液态玻璃按钮) ================= */
-    .menu-toggle {
-      width: 48px;
-      height: 48px;
+      top: 20px;
+      left: 20px;
+      width: 52px;
+      height: 52px;
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      /* 液态玻璃质感 */
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       cursor: pointer;
-      z-index: 2002; /* 最高层级 */
-      transition: transform 0.4s var(--anim-spring), background 0.3s;
+      z-index: 2000; /* 保证在最上层 */
+      transition: transform 0.3s var(--anim-spring), background 0.3s;
     }
 
-    .menu-toggle:hover {
-        background: rgba(255, 255, 255, 0.8);
-        transform: scale(1.05);
+    .hamburger:hover {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
     }
 
-    .menu-toggle span {
-      display: block;
-      width: 22px;
+    /* 汉堡条样式 */
+    .hamburger .bar {
+      width: 24px;
       height: 2px;
       background-color: #1d1d1f;
       border-radius: 2px;
       transition: all 0.4s var(--anim-spring);
-      transform-origin: center;
+      position: relative;
     }
 
-    /* 汉堡变 X 动画 */
-    .menu-toggle.active span:nth-child(1) {
-      transform: translateY(7px) rotate(45deg);
-    }
-    .menu-toggle.active span:nth-child(2) {
-      opacity: 0;
-      transform: translateX(10px);
-    }
-    .menu-toggle.active span:nth-child(3) {
-      transform: translateY(-7px) rotate(-45deg);
-    }
+    /* 按钮变为 X 的动画 */
+    .hamburger.active .bar:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .hamburger.active .bar:nth-child(2) { opacity: 0; transform: translateX(10px); }
+    .hamburger.active .bar:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
-    /* ================= Full Screen Overlay Menu (PC & Mobile) ================= */
-    .nav-overlay {
+    /* ================= 2. 侧边导航栏 (Side Nav) ================= */
+    .side-nav {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(35px) saturate(180%); /* 极度模糊 */
-      -webkit-backdrop-filter: blur(35px) saturate(180%);
-      z-index: 2000; /* 在Header下面，但覆盖Main */
+      top: 85px; /* 位于汉堡按钮下方 */
+      left: 20px;
+      width: 240px;
+      
+      /* 液态玻璃面板样式 */
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+      
+      padding: 15px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      gap: 8px;
+      z-index: 1999;
+      
+      /* 初始隐藏状态：向下偏移 + 透明 + 缩小 */
       opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
-      /* 初始放大效果，打开时缩小回1 */
-      transform: scale(1.1);
-      transition: all 0.5s var(--anim-spring);
+      pointer-events: none;
+      transform: translateY(-20px) scale(0.95);
+      transform-origin: top left;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); /* macOS 动效 */
     }
 
-    .nav-overlay.open {
+    /* 激活状态 */
+    .side-nav.open {
       opacity: 1;
-      visibility: visible;
-      transform: scale(1);
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
     }
 
-    .nav-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      text-align: center;
-      width: 100%;
-      max-width: 400px;
-    }
-
+    /* 导航链接样式 */
     .nav-item {
-      margin: 15px 0;
-      opacity: 0;
-      transform: translateY(30px);
-      transition: all 0.6s var(--anim-spring);
-    }
-    
-    /* 菜单打开时的交错动画 (Stagger) */
-    .nav-overlay.open .nav-item:nth-child(1) { transition-delay: 0.1s; opacity: 1; transform: translateY(0); }
-    .nav-overlay.open .nav-item:nth-child(2) { transition-delay: 0.15s; opacity: 1; transform: translateY(0); }
-    .nav-overlay.open .nav-item:nth-child(3) { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
-    .nav-overlay.open .nav-item:nth-child(4) { transition-delay: 0.25s; opacity: 1; transform: translateY(0); }
-    .nav-overlay.open .nav-item:nth-child(5) { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
-
-    .nav-link {
-      font-size: 28px;
-      font-weight: 700;
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
       color: var(--text-main);
       text-decoration: none;
-      display: inline-block;
-      position: relative;
-      padding: 10px 20px;
-      transition: color 0.3s;
+      font-weight: 500;
+      font-size: 15px;
+      border-radius: 14px;
+      transition: all 0.2s ease;
+      background: rgba(255, 255, 255, 0);
     }
 
-    .nav-link:hover {
-      color: var(--accent-blue);
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.6);
+      transform: translateX(4px); /* 轻微右移 */
+      color: #000;
     }
 
-    /* Tracking 子菜单 (手风琴风格) */
-    .sub-menu-container {
-      height: 0;
-      overflow: hidden;
-      transition: height 0.5s var(--anim-spring);
-      background: rgba(255, 255, 255, 0.4);
-      border-radius: 16px;
-      margin-top: 10px;
-      width: 90%;
-      margin-left: auto;
-      margin-right: auto;
+    /* Tracking 子菜单 (手风琴) */
+    .sub-nav {
+      display: none;
+      margin-left: 10px;
+      margin-top: 2px;
+      padding-left: 10px;
+      border-left: 2px solid rgba(0, 0, 0, 0.05);
     }
-
-    .sub-menu-container.expanded {
-      height: 260px; /* 根据子项数量调整 */
-      border: 1px solid rgba(255,255,255,0.5);
-    }
-
-    .sub-menu-list {
-      list-style: none;
-      padding: 15px 0;
-      margin: 0;
-    }
-
-    .sub-menu-list li a {
+    
+    .sub-nav a {
       display: block;
-      padding: 10px 0;
-      font-size: 16px;
+      padding: 8px 12px;
+      font-size: 13px;
       color: var(--text-secondary);
       text-decoration: none;
-      transition: transform 0.3s;
+      border-radius: 8px;
+      transition: all 0.2s;
     }
 
-    .sub-menu-list li a:hover {
-      color: var(--text-main);
-      transform: translateX(5px);
+    .sub-nav a:hover {
+      color: var(--accent-blue);
+      background: rgba(255,255,255,0.5);
+      transform: translateX(4px);
     }
     
-    /* 追踪按钮的小箭头 */
-    .arrow {
-        display: inline-block;
-        font-size: 14px;
-        margin-left: 8px;
+    /* 切换图标 */
+    .toggle-icon {
+        margin-left: auto;
+        font-size: 12px;
         transition: transform 0.3s;
-        vertical-align: middle;
     }
-    
-    .nav-item.active-accordion .arrow {
+    .nav-item.active-toggle .toggle-icon {
         transform: rotate(180deg);
     }
 
-    /* ================= Main Content Adjustment ================= */
-    main {
-      flex: 1;
-      margin-top: 120px; /* 初始距离Header的高度 */
+    /* ================= 3. 主要内容布局 ================= */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
       padding: 0 20px;
-      transition: margin-top 0.5s ease;
+      width: 100%;
+      box-sizing: border-box;
+      /* 因为去掉了Header，顶部留白 */
+      padding-top: 40px; 
     }
 
-    /* 大标题区域 (Brand Text) - 移到Main里作为页面标题 */
-    .hero-text-area {
+    /* 顶部 Hero 区域 (替代原Header里的Logo) */
+    .hero-header {
       text-align: center;
-      margin-bottom: 30px;
-      padding-top: 20px;
-      opacity: 1;
-      transition: opacity 0.5s;
+      margin-bottom: 40px;
+      padding-top: 20px; /* 给移动端留空间 */
     }
     
-    .hero-text-area img {
-        max-width: 100px;
+    .hero-header img {
+        width: 80px;
+        height: 80px;
         border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         margin-bottom: 15px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        transition: transform 0.5s var(--anim-spring);
     }
     
-    .hero-text-area p {
-        color: var(--text-secondary);
-        font-size: 15px;
+    .hero-header h1 {
+        font-size: 24px;
+        margin: 0;
+        background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
-    body.scrolled .hero-text-area {
-        /* 可以选择在滚动时做些淡出效果，或者保持不变 */
-    }
-
-    /* Banner */
+    /* Banner (保持原有液态风格) */
     .banner {
       width: 100%;
       height: 360px;
@@ -325,110 +230,103 @@
       transition: all 0.8s var(--anim-spring);
     }
     .banner.visible { opacity: 1; transform: scale(1); }
-    .banner::before {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
-      pointer-events: none;
-    }
 
-    /* Categories Section (液态卡片) */
+    /* Categories Text (玻璃卡片) */
     .categories-section {
       text-align: center;
       padding: 40px;
       margin: 0 auto 40px;
       max-width: 800px;
       background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border-radius: 24px;
       border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-      opacity: 0;
-      transform: translateY(20px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      opacity: 0; transform: translateY(20px);
       transition: all 0.8s ease;
     }
     .categories-section.visible { opacity: 1; transform: translateY(0); }
-    .categories-section:hover { background: rgba(255, 255, 255, 0.65); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08); }
-    .categories-title {
-      font-size: 32px; font-weight: 700; margin-bottom: 16px;
-      background: linear-gradient(135deg, #000 0%, #333 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .categories-text { font-size: 17px; line-height: 1.6; color: #424245; margin: 8px 0; }
+    .categories-title { font-size: 28px; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
+    .categories-text { font-size: 16px; color: var(--text-secondary); margin: 5px 0; }
 
-    /* Grid */
+    /* Product Grid (网格) */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 30px;
-      max-width: 1200px;
-      margin: 0 auto 60px;
+      margin-bottom: 60px;
     }
     .item {
       position: relative; border-radius: 24px;
       background: rgba(255, 255, 255, 0.4);
       backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
       border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
       padding: 15px;
       transition: all 0.4s var(--anim-spring);
       opacity: 0; transform: translateY(40px);
       cursor: pointer;
     }
-    .item a { text-decoration: none; display: block; height: 100%; }
+    .item a { text-decoration: none; display: block; }
     .item.visible { opacity: 1; transform: translateY(0); }
     .item:hover {
       background: rgba(255, 255, 255, 0.7);
-      transform: translateY(-10px) scale(1.02);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
     }
-    .image-frame { border-radius: 16px; overflow: hidden; position: relative; aspect-ratio: 1 / 1; }
-    .item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--anim-spring); display: block; }
-    .item:hover img { transform: scale(1.12); }
-    .item-label {
-      display: block; margin-top: 15px; text-align: center;
-      font-size: 16px; font-weight: 600; color: var(--text-main);
-    }
+    .image-frame { border-radius: 16px; overflow: hidden; aspect-ratio: 1 / 1; }
+    .item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s; display: block; }
+    .item:hover img { transform: scale(1.1); }
+    .item-label { display: block; margin-top: 15px; text-align: center; font-weight: 600; color: var(--text-main); }
 
     /* Footer */
     footer {
-      margin: 40px auto; width: 90%; max-width: 800px; padding: 20px; text-align: center;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      text-align: center; padding: 30px;
       color: var(--text-secondary); font-size: 12px;
-      transition: opacity 0.6s ease; opacity: 0;
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255,255,255,0.5);
+      margin-top: auto;
     }
-    footer.visible { opacity: 1; }
 
     /* Marketing Modal */
     #marketingModal {
       display: none; position: fixed; z-index: 3000; left: 50%; top: 50%;
       transform: translate(-50%, -50%) scale(0.9);
       background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
+      backdrop-filter: blur(40px) saturate(180%);
       border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 30px 60px -10px rgba(0, 0, 0, 0.25);
       padding: 30px; width: 90%; max-width: 360px; text-align: center;
       opacity: 0; transition: all 0.5s var(--anim-spring);
     }
     #marketingModal.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    #marketingModal img { width: 100%; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-    #marketingModal h2 { font-size: 22px; margin: 0 0 10px 0; color: var(--text-main); }
-    #marketingModal p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+    #marketingModal img { width: 100%; border-radius: 16px; margin-bottom: 20px; }
+    #marketingModal h2 { font-size: 20px; margin-bottom: 10px; color: var(--text-main); }
+    #marketingModal p { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
 
-    /* ================= Mobile Optimization ================= */
+    /* ================= 4. 移动端优化 (iOS style) ================= */
     @media (max-width: 768px) {
-      header { padding: 0 20px; height: 70px; }
-      main { margin-top: 90px; padding: 0 15px; }
-      .categories-section { padding: 25px 15px; width: 90%; }
-      .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-      .item { padding: 10px; }
-      .categories-title { font-size: 24px; }
+      /* 移动端：菜单宽度调整，类似通知弹窗 */
+      .side-nav {
+        width: auto;
+        right: 20px; /* 左右留白，不再是固定宽度 */
+        left: 20px;
+        top: 80px;
+      }
+      
+      /* 移动端 Grid 双列 */
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+      
+      .container { padding-top: 20px; }
       .banner { height: 220px; background-attachment: scroll; }
-      .menu-toggle { width: 44px; height: 44px; }
-      .nav-link { font-size: 24px; }
+      .hamburger { width: 48px; height: 48px; }
+      
+      /* 避免内容被悬浮菜单挡住 */
+      .hero-header { margin-top: 40px; } 
     }
   </style>
 
@@ -436,230 +334,207 @@
     window.$crisp = [];
     window.CRISP_WEBSITE_ID = "bab3c6cf-4471-41fd-8fda-e0fdfa4aa01c";
     (function() {
-      var d = document;
-      var s = d.createElement("script");
-      s.src = "https://client.crisp.chat/l.js";
-      s.async = 1;
+      var d = document; var s = d.createElement("script");
+      s.src = "https://client.crisp.chat/l.js"; s.async = 1;
       d.getElementsByTagName("head")[0].appendChild(s);
     })();
-
-    let idleTimer;
-    const idleTime = 5000; 
-    function resetIdleTimer() {
-      clearTimeout(idleTimer);
-      showCrisp();
-      idleTimer = setTimeout(hideCrisp, idleTime);
-    }
-    function hideCrisp() { if (window.$crisp) { window.$crisp.push(["do", "chat:hide"]); } }
-    function showCrisp() { if (window.$crisp) { window.$crisp.push(["do", "chat:show"]); } }
-    ["scroll", "mousemove", "keydown", "click", "touchstart"].forEach(evt => {
-      document.addEventListener(evt, resetIdleTimer, { passive: true });
-    });
+    
+    // Auto hide logic
+    let idleTimer; const idleTime = 30000;
+    function resetIdleTimer() { clearTimeout(idleTimer); showCrisp(); idleTimer = setTimeout(hideCrisp, idleTime); }
+    function hideCrisp() { if (window.$crisp) window.$crisp.push(["do", "chat:hide"]); }
+    function showCrisp() { if (window.$crisp) window.$crisp.push(["do", "chat:show"]); }
+    ["scroll", "click", "touchstart"].forEach(evt => document.addEventListener(evt, resetIdleTimer, {passive:true}));
     window.addEventListener("load", resetIdleTimer);
   </script>
 </head>
 <body>
 
-    <header>
-        <div class="brand-container">
-            <img src="assets/brand.jpg" alt="Logo">
-            <span class="brand-text-small">Deying Luxury</span>
-        </div>
-
-        <div class="menu-toggle" id="menuToggle">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    </header>
-
-    <div class="nav-overlay" id="navOverlay">
-        <ul class="nav-list">
-            <li class="nav-item"><a href="index.html" class="nav-link">Product</a></li>
-            <li class="nav-item"><a href="feedback.html" class="nav-link">Feedback</a></li>
-            <li class="nav-item"><a href="about.html" class="nav-link">About</a></li>
-            <li class="nav-item"><a href="luxury.html" class="nav-link">Official</a></li>
-            
-            <li class="nav-item" id="trackingItem">
-                <a href="#" class="nav-link" onclick="toggleTracking(event)">Tracking <span class="arrow">▾</span></a>
-                <div class="sub-menu-container" id="trackingSubMenu">
-                    <ul class="sub-menu-list">
-                        <li><a href="https://www.17track.net/en" target="_blank">17TRACK</a></li>
-                        <li><a href="https://www.fedex.com/en-us/home.html" target="_blank">FedEx</a></li>
-                        <li><a href="https://www.dhl.com/fr-fr/home.html" target="_blank">DHL</a></li>
-                        <li><a href="https://www.aramex.com/sa/en" target="_blank">Aramex</a></li>
-                        <li><a href="https://www.ups.com/track?loc=en_US&requester=ST/" target="_blank">UPS</a></li>
-                    </ul>
-                </div>
-            </li>
-        </ul>
+    <div class="hamburger" id="hamburger">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
     </div>
 
-    <main>
-        <div class="hero-text-area">
+    <nav class="side-nav" id="sideNav">
+        <a href="index.html" class="nav-item">Home</a>
+        <a href="feedback.html" class="nav-item">Feedback</a>
+        <a href="about.html" class="nav-item">About Us</a>
+        <a href="luxury.html" class="nav-item">Official Site</a>
+        
+        <div class="nav-item" id="trackingToggle" style="cursor: pointer;">
+            Tracking <span class="toggle-icon">▾</span>
+        </div>
+        <div class="sub-nav" id="trackingSubMenu">
+            <a href="https://www.17track.net/en" target="_blank">17TRACK</a>
+            <a href="https://www.fedex.com/en-us/home.html" target="_blank">FedEx</a>
+            <a href="https://www.dhl.com/fr-fr/home.html" target="_blank">DHL</a>
+            <a href="https://www.aramex.com/sa/en" target="_blank">Aramex</a>
+            <a href="https://www.ups.com/track?loc=en_US" target="_blank">UPS</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero-header fade-in">
             <img src="assets/brand.jpg" alt="DeyingLuxury">
-            <h1 style="margin: 10px 0; font-size: 22px;">2025 Fall - Winter Collection</h1>
+            <h1>2025 Fall - Winter</h1>
         </div>
 
-        <div class="banner"></div>
+        <div class="banner fade-in"></div>
 
-        <div class="categories-section">
-            <h2 class="categories-title">Curated Selection</h2>
-            <p class="categories-text">Exploring the essence of 1:1 Mirror Copy craftsmanship.</p>
-            <p class="categories-text">Customization services available upon request.</p>
+        <div class="categories-section fade-in">
+            <div class="categories-title">Curated Selection</div>
+            <div class="categories-text">Exploring the essence of 1:1 Mirror Copy craftsmanship.</div>
+            <div class="categories-text">Customization services available upon request.</div>
         </div>
 
         <div class="grid">
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://mbags.qiqiyg.com/defaulten.html" target="_blank">
                     <div class="image-frame"><img src="assets/womenbag.jpg" alt="Bag"></div>
                     <span class="item-label">Women's Bag</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://ss8899.x.yupoo.com/" target="_blank">
                     <div class="image-frame"><img src="assets/womenshoes.jpg" alt="Shoes"></div>
                     <span class="item-label">Women's Shoes</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://alina-fashion-store2.x.yupoo.com/" target="_blank">
                     <div class="image-frame"><img src="assets/womenclothing.jpg" alt="Clothing"></div>
                     <span class="item-label">Women's Wear</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://a202007051508096050207630.szwego.com/weshop/search/A202007051508096050207630?filterText=shoes" target="_blank">
                     <div class="image-frame"><img src="assets/menshoes.jpg" alt="Men Shoes"></div>
                     <span class="item-label">Men's Shoes</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://407131796.x.yupoo.com/albums" target="_blank">
                     <div class="image-frame"><img src="assets/menclothing1.jpg" alt="Men Clothing"></div>
                     <span class="item-label">Men's Wear I</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://cpdk8888.x.yupoo.com/albums?tab=gallery" target="_blank">
                     <div class="image-frame"><img src="assets/menclothing2.jpg" alt="Men Clothing"></div>
                     <span class="item-label">Men's Wear II</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://a202007051508096050207630.szwego.com/weshop/search/A202007051508096050207630?filterText=watch" target="_blank">
                     <div class="image-frame"><img src="assets/watches.jpg" alt="Watches"></div>
                     <span class="item-label">Timepieces</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://351164.x.yupoo.com/albums" target="_blank">
                     <div class="image-frame"><img src="assets/jewelry.jpg" alt="Jewelry"></div>
                     <span class="item-label">Jewelry</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://a2017121901110006604.szwego.com/static/index.html?t=1735034741602#/goods_list/A2017121901110006604?tagId=23105351" target="_blank">
                     <div class="image-frame"><img src="assets/caps.jpg" alt="Caps"></div>
                     <span class="item-label">Headwear</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://shijuemaoyi888.x.yupoo.com/albums" target="_blank">
                     <div class="image-frame"><img src="assets/belts.jpg" alt="Belts"></div>
                     <span class="item-label">Belts</span>
                 </a>
             </div>
-            <div class="item">
+            <div class="item fade-in">
                 <a href="https://weinifuwu14.x.yupoo.com/albums?tab=gallery" target="_blank">
                     <div class="image-frame"><img src="assets/sunglasses.jpg" alt="Sunglasses"></div>
                     <span class="item-label">Eyewear</span>
                 </a>
             </div>
-             <div class="item">
+             <div class="item fade-in">
                 <a href="https://xiaobei12.x.yupoo.com/contact" target="_blank">
                     <div class="image-frame"><img src="assets/menshoes.jpg" alt="Men's bag"></div>
                     <span class="item-label">Men's Bags</span>
                 </a>
             </div>
         </div>
-    </main>
+    </div>
 
     <footer>
-        &copy; 2025 DEYINGLUXURY. All Rights Reserved. <br>
-        <span style="font-size: 10px; opacity: 0.6;">Beijing ICP No. 11001839-1</span>
+        © 2025 DEYINGLUXURY. All Rights Reserved.<br>
+        <span style="opacity:0.6">Beijing ICP No. 11001839-1</span>
     </footer>
 
     <div id="marketingModal">
-        <img src="assets/chris.jpg" alt="Christmas Gift">
+        <img src="assets/chris.jpg" alt="Gift">
         <h2>🎁 Season's Greetings</h2>
         <p>2025 Early Winter Arrivals. Enjoy free shipping on orders over $500.</p>
-        <p style="font-weight: 600; color: #007aff;">Order now for a free gift!</p>
     </div>
 
     <script>
-        // 1. 菜单逻辑 (Hamburger Logic)
-        const menuToggle = document.getElementById('menuToggle');
-        const navOverlay = document.getElementById('navOverlay');
-        const body = document.body;
+        // 1. 菜单逻辑
+        const hamburger = document.getElementById('hamburger');
+        const sideNav = document.getElementById('sideNav');
+        let isMenuOpen = false;
 
-        menuToggle.addEventListener('click', () => {
-            menuToggle.classList.toggle('active'); // 按钮变X
-            navOverlay.classList.toggle('open');   // 菜单显示
-            body.classList.toggle('menu-open');    // 禁止背景滚动
+        // 切换菜单
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止冒泡
+            isMenuOpen = !isMenuOpen;
+            hamburger.classList.toggle('active');
+            sideNav.classList.toggle('open');
         });
 
-        // 点击链接后自动关闭菜单
-        document.querySelectorAll('.nav-link:not([onclick])').forEach(link => {
-            link.addEventListener('click', () => {
-                menuToggle.classList.remove('active');
-                navOverlay.classList.remove('open');
-                body.classList.remove('menu-open');
-            });
-        });
-
-        // 2. Tracking 子菜单折叠逻辑 (Accordion)
-        function toggleTracking(e) {
-            e.preventDefault(); // 阻止跳转
-            const trackingItem = document.getElementById('trackingItem');
-            const subMenu = document.getElementById('trackingSubMenu');
-            
-            trackingItem.classList.toggle('active-accordion');
-            subMenu.classList.toggle('expanded');
-        }
-
-        // 3. 滚动监听 (Header Frosting)
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                document.querySelector('header').classList.add('scrolled');
-            } else {
-                document.querySelector('header').classList.remove('scrolled');
+        // 点击外部关闭菜单
+        document.addEventListener('click', (e) => {
+            if (isMenuOpen && !sideNav.contains(e.target) && !hamburger.contains(e.target)) {
+                isMenuOpen = false;
+                hamburger.classList.remove('active');
+                sideNav.classList.remove('open');
             }
         });
 
-        // 4. 元素淡入 (Fade In)
+        // 2. Tracking 折叠逻辑
+        const trackingToggle = document.getElementById('trackingToggle');
+        const trackingSubMenu = document.getElementById('trackingSubMenu');
+        trackingToggle.addEventListener('click', () => {
+            trackingToggle.classList.toggle('active-toggle');
+            if (trackingSubMenu.style.display === 'block') {
+                trackingSubMenu.style.display = 'none';
+            } else {
+                trackingSubMenu.style.display = 'block';
+            }
+        });
+
+        // 3. 淡入动画 (Intersection Observer)
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) entry.target.classList.add('visible');
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
             });
         }, { threshold: 0.1 });
 
-        document.querySelectorAll('.banner, .categories-section, .item, footer, .hero-text-area').forEach(el => {
-            observer.observe(el);
-        });
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-        // 5. 弹窗逻辑
+        // 4. 弹窗逻辑
         window.addEventListener('load', () => {
-            if (!localStorage.getItem('marketingShown_v3')) { // v3 key
+            const key = 'marketingShown_v4'; // 更新版本
+            if (!localStorage.getItem(key)) {
                 setTimeout(() => {
                     document.getElementById('marketingModal').classList.add('show');
-                    localStorage.setItem('marketingShown_v3', 'true');
-                }, 1200);
+                    localStorage.setItem(key, 'true');
+                }, 1000);
                 setTimeout(() => {
                     document.getElementById('marketingModal').classList.remove('show');
-                }, 8000); 
+                }, 8000);
             }
         });
+        // 点击弹窗外关闭
         document.addEventListener('click', (e) => {
             const modal = document.getElementById('marketingModal');
             if (modal.classList.contains('show') && !modal.contains(e.target)) {
@@ -669,21 +544,13 @@
     </script>
 
     <script>
-        // 安全与防调试
+        // 防调试
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
           if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) || (e.ctrlKey && ['U', 'S'].includes(e.key.toUpperCase()))) {
             e.preventDefault();
           }
         }, true);
-        (function() {
-          const config = { checkInterval: 2000, sizeThreshold: 160 };
-          setInterval(() => {
-            const wdiff = Math.abs(window.outerWidth - window.innerWidth);
-            const hdiff = Math.abs(window.outerHeight - window.innerHeight);
-            // Detection logic kept minimal
-          }, config.checkInterval);
-        })();
     </script>
 </body>
 </html>
